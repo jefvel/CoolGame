@@ -2,3 +2,9 @@
 	path = Kha
 	url = ../Kha
 	branch = master
+[submodule "Libraries/Zui"]
+	path = Libraries/Zui
+	url = https://github.com/luboslenco/zui.git
+[submodule "Libraries/linc_enet"]
+	path = Libraries/linc_enet
+	url = https://github.com/snowkit/linc_enet.git
