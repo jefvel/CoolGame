@@ -1,8 +1,11 @@
 var project = new Project('Bonk');
 
+//Android settings
+project.targetOptions.android.screenOrientation = "sensorPortrait";
+project.targetOptions.android.package = "com.jefvel.coolgame";
+
 project.addAssets("Assets/**");
 project.addLibrary("zui");
-project.addLibrary("linc_enet");
 project.addSources('Sources');
 
 return project;
