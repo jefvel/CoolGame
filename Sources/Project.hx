@@ -10,35 +10,98 @@ import zui.Zui;
 import zui.Id;
 import zui.Ext;
 
+import kha.input.Gamepad;
+
 import graphics.Sprite;
 
 class Project {
-	var image:Image;
+	var guy:Sprite;
 	var font:kha.Font;
 	var ui:Zui;
 	
+	var curGuy:Int = 0;
+	var sprites:Array<Sprite>;
+	
 	public function new() {
-		Scheduler.addTimeTask(update, 0, 1 / 120);
+		sprites = new Array<Sprite>();
+
+		Scheduler.addTimeTask(update, 0, 1 / 90);
 		Assets.loadEverything(loaded);
 	}
 	
 	var config:Dynamic;
 	var o:Sprite;
+	var x = 0.0;
+	var y = 0.0;
+	var ox = 0.0;
+	var oy = 0.0;
+	var px = 0.0;
+	var py = 0.0;
 	
 	function loaded(){
+		for(i in 0...1024){
+			guy = new Sprite(Assets.images.guy);
+			guy.x = -100;
+			guy.y = -100;
+			sprites.push(guy);
+		}
+		
 		o = new Sprite();
 		var o = Assets.blobs.game_json;
 		config = Json.parse(o.toString());
-		image = Assets.images.guy;
+		name = config.username;
 		font = Assets.fonts.RobotoCondensed_Regular;
 		ui = new Zui(font, 17, 16, 0, 2.0);
 		System.notifyOnRender(render);
+		kha.input.Mouse.get().notify(onMouseDown, null, onMouseMove, null);
+		if(Gamepad.get() != null){
+			Gamepad.get().notify(axis, button);
+		}
 	}
+	
+	function button(button:Int, i:Float):Void {
+		trace("Button: " + button + ", v: "+ i);
+	}
+	
+	function axis(axis:Int, value:Float):Void {
+		//trace("Axis: " + axis + ", v: "+ value);
+		switch(axis){
+			case 0: 
+				ox = value;
+			case 1:
+				oy = -value;
+		}
+	}
+	
+	public function onMouseDown(button:Int, x: Int, y: Int) {
+    }
+	
+	public function onMouseMove(x: Int, y: Int, movementX: Int, movementY: Int) {
+    	
+    }
 
 	function update(): Void {
+		var l = Math.sqrt(ox * ox + oy * oy);
+		if(l > 0.3){
+			x += ox * 0.9;
+			y += oy * 0.9;
+		}
 		
+		x *= 0.9;
+		y *= 0.9;
+		
+		px += x;
+		py += y;
+		
+		if(sprites.length > 0){
+			curGuy++;
+			curGuy = curGuy % sprites.length;
+			sprites[curGuy].x = px;
+			sprites[curGuy].y = py;
+			
+		}
 	}
-
+	
 	var i = 0.0;
 	var name = "Olle";
 	var checked = true;
@@ -47,69 +110,35 @@ class Project {
 		i %= 6;
 		
 		var fb = framebuffer.g2;
-		
 		fb.begin();
 		
 		if(checked){
-			fb.drawScaledSubImage(image, Std.int(i) * 32, 0, 32, 32, 20, 300, 128, 128);
+
+			for(goy in sprites){
+				goy.draw(framebuffer);
+			}
+			//fb.drawScaledSubImage(image, Std.int(i) * 32, 0, 32, 32, x, y, 128, 128);
 		}
 		
 		framebuffer.g2.font = font;
 		fb.fontSize = Std.int(System.windowHeight() / 20);
 		framebuffer.g2.drawString("Super Tech Demo", 30,  30);
 		
-		fb.color = kha.Color.Green;
-		fb.drawLine(0, 0, 100, 100, 2);
-		
 		fb.end();
 	
 		ui.begin(fb);
 		
     	// window() returns true if redraw is needed - windows are cached into textures
-		if (ui.window(Id.window(), System.windowWidth() - 512, 5, 250, 600)) {
-			if (ui.node(Id.node(), "Node", 0, true)) {
-				ui.indent();
-				ui.separator();
-				ui.text("Text");
-				name = ui.textInput(Id.textInput(), name, "Username");
-				if(ui.button("GOGEL!")){
-					trace("asdf");
-					kha.input.Mouse.get().hideSystemCursor();
-				}
-				
-				checked = ui.check(Id.check(), "Check Box", checked);
-				var id = Id.radio();
-				ui.radio(id, Id.pos(), "Radio 1");
-				ui.radio(id, Id.pos(), "Radio 2");
-				ui.radio(id, Id.pos(), "Radio 3");
-				if (ui.node(Id.node(), "Nested Node")) {
-					ui.indent();
-					ui.separator();
-					ui.text("Row");
-					ui.row([2/5, 2/5, 1/5]);
-					ui.button("A");
-					ui.button("B");
-					ui.check(Id.check(), "C");
-					ui.text("Simple list");
-					Ext.list(ui, Id.list(), ["Item 1", "Item 2", "Item 3", "Item 3", "Item 3", "Item 3", "Item 3", "Item 3", "Item 3"]);
-					
-					ui.unindent();
-					if (ui.node(Id.node(), "Nested Node")) {
-						ui.indent();
-						ui.separator();
-						ui.text("Row");
-						ui.row([2/5, 2/5, 1/5]);
-						ui.button("A");
-						ui.button("B");
-						ui.check(Id.check(), "C");
-						ui.text("Simple list");
-						Ext.list(ui, Id.list(), ["Item 1", "Item 2", "Item 3"]);
-						ui.unindent();
-					}
-				}
-				ui.unindent();
+		if (ui.window(Id.window(), Std.int(System.windowWidth() / 2) - 200, Std.int(System.windowHeight()/2), 400, 200)) {
+			name = ui.textInput(Id.textInput(), name, "Username");
+			ui.row([0.5, 0.5]);
+			checked = ui.check(Id.check(), "Extra Cool", checked);
+			ui.check(Id.check(), "Fart", true);
+			if(ui.button("Play!")){
+				kha.input.Mouse.get().hideSystemCursor();
 			}
 		}
+		
 		ui.end();
 	}
 }
