@@ -4,8 +4,26 @@ import kha.System;
 
 class Main {
 	public static function main() {
-		System.init({title: "Bonk", width: 800, height: 600}, function() {
-			new Project();
-		});
+		var windowOptions:kha.WindowOptions = {
+			width: 500,
+			height: 320,
+			mode:Window,
+			windowedModeOptions: {
+				resizable: true,
+				maximizable: true,
+				minimizable:true
+			}
+		};
+		
+		var o = [windowOptions];
+		System.initEx("Bonk", o, WindowInit, KhaInit);
+	}
+	
+	static function WindowInit(i:Int) {
+		trace("Init: " + i);
+	}
+	
+	static function KhaInit() {
+		new Project();
 	}
 }

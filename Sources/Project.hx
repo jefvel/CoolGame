@@ -72,15 +72,16 @@ class Project {
 				oy = -value;
 		}
 	}
-	
+	var mouseY = 0.0;
 	public function onMouseDown(button:Int, x: Int, y: Int) {
     }
 	
 	public function onMouseMove(x: Int, y: Int, movementX: Int, movementY: Int) {
-    	
+    	mouseY = y;
     }
 
 	function update(): Void {
+		//trace("U");
 		var l = Math.sqrt(ox * ox + oy * oy);
 		if(l > 0.3){
 			x += ox * 0.9;
@@ -105,12 +106,14 @@ class Project {
 	var i = 0.0;
 	var name = "Olle";
 	var checked = true;
+	var colors = [0xffD32F2F, 0xff9C27B0, 0xff03A9F4];
+	var curC = 2;
 	function render(framebuffer: Framebuffer): Void {
-		i += 0.05;
-		i %= 6;
+		//trace("R" + System.windowHeight());
+		i = kha.System.time * 1.5;
 		
 		var fb = framebuffer.g2;
-		fb.begin();
+		fb.begin(colors[curC]);
 		
 		if(checked){
 
@@ -119,26 +122,36 @@ class Project {
 			}
 			//fb.drawScaledSubImage(image, Std.int(i) * 32, 0, 32, 32, x, y, 128, 128);
 		}
+	
+		fb.color = 0xffffffff;
+		
+		var title = "Super Tech Demo";
+		var h = Std.int(System.windowHeight() / 15);
+		var w = font.width(h, title);
 		
 		framebuffer.g2.font = font;
-		fb.fontSize = Std.int(System.windowHeight() / 20);
-		framebuffer.g2.drawString("Super Tech Demo", 30,  30);
+		fb.fontSize = h;
+		framebuffer.g2.drawString(title, (System.windowWidth() - w) / 2,  (System.windowHeight() - h) / 2 + Math.cos(i) * 8);
+		
+		fb.drawLine(0, 0, 100, 100);
 		
 		fb.end();
-	
-		ui.begin(fb);
 		
-    	// window() returns true if redraw is needed - windows are cached into textures
-		if (ui.window(Id.window(), Std.int(System.windowWidth() / 2) - 200, Std.int(System.windowHeight()/2), 400, 200)) {
-			name = ui.textInput(Id.textInput(), name, "Username");
-			ui.row([0.5, 0.5]);
-			checked = ui.check(Id.check(), "Extra Cool", checked);
-			ui.check(Id.check(), "Fart", true);
-			if(ui.button("Play!")){
-				kha.input.Mouse.get().hideSystemCursor();
+		//if(mouseY > System.windowHeight() - 300){
+			ui.begin(fb);
+			
+			// window() returns true if redraw is needed - windows are cached into textures
+			if (ui.window(Id.window(), Std.int(System.windowWidth() / 2) - 200, Std.int(System.windowHeight() - 220), 400, 200)) {
+				name = ui.textInput(Id.textInput(), name, "Username");
+				ui.row([0.5, 0.5]);
+				checked = ui.check(Id.check(), "Extra Cool", checked);
+				ui.check(Id.check(), "Fart", true);
+				if(ui.button("Play!")){
+					kha.input.Mouse.get().hideSystemCursor();
+				}
 			}
-		}
-		
-		ui.end();
+			
+			ui.end();
+		//}
 	}
 }
