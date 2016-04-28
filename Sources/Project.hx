@@ -14,7 +14,6 @@ import zui.Ext;
 import kha.input.Gamepad;
 
 import graphics.Sprite;
-import enet.ENet;
 
 class Project {
 	var guy:Sprite;
@@ -30,12 +29,18 @@ class Project {
 		Scheduler.addTimeTask(update, 0, 1 / 60);
 		Assets.loadEverything(loaded);
 		
-		System.notifyOnApplicationState(function(){}, function(){}, function(){}, function(){}, function(){
-			trace("KHA DYING!");
+		System.notifyOnApplicationState(
+			function() {}, 
+			function() {}, 
+			function() {}, 
+			function() {}, 
+			function() {
+				trace("KHA DYING!");
 		});
 		
+		
 		#if sys_windows
-		var i = new Server();
+		//var i = new Server();
 		#end
 	}
 	
@@ -70,8 +75,24 @@ class Project {
 		ui = new Zui(font, 17, 16, 0, 2.0);
 		System.notifyOnRender(render);
 		kha.input.Mouse.get().notify(onMouseDown, null, onMouseMove, null);
+		kha.input.Keyboard.get().notify(onKeyDown, onKeyUp);
 		if(Gamepad.get() != null){
 			Gamepad.get().notify(axis, button);
+		}
+	}
+	
+	function onKeyDown(k:kha.Key, i:String):Void {
+		if(k == kha.Key.BACK){
+			y -= 50;
+			//System.requestShutdown();
+		}
+
+	}
+	
+	function onKeyUp(k:kha.Key, i:String):Void {
+		if(k == kha.Key.BACK){
+			y += 150;
+			//System.requestShutdown();
 		}
 	}
 	

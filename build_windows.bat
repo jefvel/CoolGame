@@ -1,3 +1,4 @@
-node Kha/make windows --compile
-cd build/windows
-Bonk.exe
+node Kha/make windows 
+::--compile
+::cd build/windows
+::Bonk.exe

@@ -8,7 +8,9 @@ project.targetOptions.android.package = "com.jefvel.coolgame";
 project.addAssets("Assets/**");
 project.addShaders('Shaders/**');
 project.addLibrary("zui");
-project.addLibrary("enet");
+
+//project.addLibrary("linc_enet");
+
 //project.addDefine("windows");
 //project.addParameter("-cpp cpp/");
 //project.addParameter("-cp ../Libraries/linc_enet");

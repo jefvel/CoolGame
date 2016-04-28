@@ -1,22 +1,14 @@
 package;
-
+/*
 import enet.ENet;
 import kha.Scheduler;
 
 class Server {
-    //var adr:ENetAddress;
-    //var server:ENetHost;
-    //var event:ENetEvent;
-    
-    /*
-    var eventStatus = 1;
-    
+    var adr:ENetAddress = null;
     var server:ENetHost = null;
-        */
-    
-    var server:ENetHost;
     var event:ENetEvent = null;
-    
+    var eventStatus = 0;
+
     public function new() {
         if (ENet.initialize() != 0) {
             trace("An error occurred while initializing ENet.");
@@ -25,18 +17,19 @@ class Server {
         
         var address:ENetAddress = null;
         address.port = 1234;
-        address.host =  ENet.ENET_HOST_ANY;
+        address.host = 0;//ENet.ENET_HOST_ANY;
                
-        server = ENet.createHost(cast address, 32, 0, 0);
+        var server = ENet.createHost(cast address);//, 32, 0, 0);
         
       
         Scheduler.addFrameTask(update, 1);
         //trace(h.peerCount);
         
-/*
+
         var adr:ENetAddress = null;
         adr.host = ENet.ENET_HOST_ANY;
         adr.port = 1234;
+        
         server = ENet.host_create(cast adr, 32, 2, 0, 0);
         if (server == null) {
             trace("An error occurred while trying to create an ENet server host.");
@@ -45,14 +38,11 @@ class Server {
         }
         
         trace("Server is listening on port " + adr.port);
-
-        
-        */
     }
     
     public function destroy() {
         //ENet.destroyHost(cast server);
-        ENet.deinitialize();
+        //ENet.deinitialize();
     }
     
     private function update() {
@@ -83,6 +73,6 @@ class Server {
 
                 default:
             }
-        } */      
+        }     
     }
-}
+}*/
