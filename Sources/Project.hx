@@ -6,6 +6,7 @@ import kha.System;
 import kha.Image;
 import kha.Assets;
 import haxe.Json;
+
 import zui.Zui;
 import zui.Id;
 import zui.Ext;
@@ -13,6 +14,7 @@ import zui.Ext;
 import kha.input.Gamepad;
 
 import graphics.Sprite;
+import enet.ENet;
 
 class Project {
 	var guy:Sprite;
@@ -25,8 +27,16 @@ class Project {
 	public function new() {
 		sprites = new Array<Sprite>();
 
-		Scheduler.addTimeTask(update, 0, 1 / 90);
+		Scheduler.addTimeTask(update, 0, 1 / 60);
 		Assets.loadEverything(loaded);
+		
+		System.notifyOnApplicationState(function(){}, function(){}, function(){}, function(){}, function(){
+			trace("KHA DYING!");
+		});
+		
+		#if sys_windows
+		var i = new Server();
+		#end
 	}
 	
 	var config:Dynamic;
@@ -38,11 +48,17 @@ class Project {
 	var px = 0.0;
 	var py = 0.0;
 	
+	var  tx = 0.0;
+	var ty = 0.0;
+	
 	function loaded(){
-		for(i in 0...1024){
+		for(i in 0...1){
 			guy = new Sprite(Assets.images.guy);
 			guy.x = -100;
 			guy.y = -100;
+			
+			guy.anchorX = 0.5;
+			guy.anchorY = 0.5;
 			sprites.push(guy);
 		}
 		
@@ -78,6 +94,8 @@ class Project {
 	
 	public function onMouseMove(x: Int, y: Int, movementX: Int, movementY: Int) {
     	mouseY = y;
+		tx = x;
+		ty = y;
     }
 
 	function update(): Void {
@@ -88,18 +106,21 @@ class Project {
 			y += oy * 0.9;
 		}
 		
+		x += (tx - px) * 0.06;
+		y += (ty - py) * 0.06;
+		
 		x *= 0.9;
 		y *= 0.9;
 		
 		px += x;
 		py += y;
+
 		
 		if(sprites.length > 0){
 			curGuy++;
 			curGuy = curGuy % sprites.length;
 			sprites[curGuy].x = px;
 			sprites[curGuy].y = py;
-			
 		}
 	}
 	
@@ -109,12 +130,11 @@ class Project {
 	var colors = [0xffD32F2F, 0xff9C27B0, 0xff03A9F4];
 	var curC = 2;
 	function render(framebuffer: Framebuffer): Void {
-		//trace("R" + System.windowHeight());
 		i = kha.System.time * 1.5;
 		
 		var fb = framebuffer.g2;
 		fb.begin(colors[curC]);
-		
+		fb.color = 0xffffffff;
 		if(checked){
 
 			for(goy in sprites){
@@ -123,8 +143,6 @@ class Project {
 			//fb.drawScaledSubImage(image, Std.int(i) * 32, 0, 32, 32, x, y, 128, 128);
 		}
 	
-		fb.color = 0xffffffff;
-		
 		var title = "Super Tech Demo";
 		var h = Std.int(System.windowHeight() / 15);
 		var w = font.width(h, title);
@@ -133,11 +151,8 @@ class Project {
 		fb.fontSize = h;
 		framebuffer.g2.drawString(title, (System.windowWidth() - w) / 2,  (System.windowHeight() - h) / 2 + Math.cos(i) * 8);
 		
-		fb.drawLine(0, 0, 100, 100);
-		
 		fb.end();
-		
-		//if(mouseY > System.windowHeight() - 300){
+		if(mouseY > System.windowHeight() - 220){
 			ui.begin(fb);
 			
 			// window() returns true if redraw is needed - windows are cached into textures
@@ -152,6 +167,6 @@ class Project {
 			}
 			
 			ui.end();
-		//}
+		}
 	}
 }

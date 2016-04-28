@@ -16,6 +16,7 @@ class Main {
 		};
 		
 		var o = [windowOptions];
+		
 		System.initEx("Bonk", o, WindowInit, KhaInit);
 	}
 	
