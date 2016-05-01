@@ -13,16 +13,17 @@ class Sprite {
     
     public function new(graphics:Image = null) {
         this.graphics = graphics;
-        anchorX = anchorY = 0;
+        anchorX = anchorY = 0.5;
     }
     
-    public function draw(b:kha.Framebuffer) {
-        if(graphics != null){
-            b.g2.drawScaledSubImage(graphics,  0, 0, 32, 32, 
-            Std.int((x - scale * 32 * anchorX) / scale) * scale, 
-            Std.int((y - scale * 32 * anchorY) / scale) * scale, 
-            32 * scale, 
-            32 * scale);
-        }
+    public function draw(b:kha.graphics2.Graphics) {
+		var tx = x - G.camera.ox;
+		var ty = y - G.camera.oy;
+		
+		b.drawScaledSubImage(graphics,  0, 0, 32, 32, 
+		Std.int((tx - scale * 32 * anchorX) / scale) * scale, 
+		Std.int((ty - scale * 32 * anchorY) / scale) * scale, 
+		32 * scale, 
+		32 * scale);
     }
 }

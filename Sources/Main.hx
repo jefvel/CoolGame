@@ -15,13 +15,11 @@ class Main {
 			}
 		};
 		
-		var o = [windowOptions];
-		
+		var o = [windowOptions];	
 		System.initEx("Bonk", o, WindowInit, KhaInit);
 	}
 	
 	static function WindowInit(i:Int) {
-		trace("Init: " + i);
 	}
 	
 	static function KhaInit() {
