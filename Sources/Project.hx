@@ -44,14 +44,7 @@ class Project {
 		#if sys_windows
 		var i = new Server();
 		#end
-		
-		#if sys_html5
-		client = new network.Client(onMessage);
-		client.connect("ws://jefvel.net:6648", function(e:Dynamic) {
-			trace("I am connected!");
-			Scheduler.addTimeTask(sendUpdate, 0, 1 / 20);
-		});
-		#end
+	
 	}
 	
 	function sendUpdate() {
@@ -121,6 +114,14 @@ class Project {
 		if(Gamepad.get() != null){
 			Gamepad.get().notify(axis, button);
 		}
+			
+		#if sys_debug_html5
+		client = new network.Client(onMessage);
+		client.connect(config.serverAddress, function(e:Dynamic) {
+			trace("I am connected!");
+			Scheduler.addTimeTask(sendUpdate, 0, 1 / 20);
+		});
+		#end
 	}
 	
 	function onKeyDown(k:kha.Key, i:String):Void {
