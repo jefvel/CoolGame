@@ -10,3 +10,6 @@
 	path = Libraries/linc_enet
 	url = https://github.com/snowkit/linc_enet.git
     branch = master
+[submodule "Libraries/kek"]
+	path = Libraries/kek
+	url = https://github.com/jefvel/kek.git

@@ -2,7 +2,7 @@ package entity;
 
 import kha.graphics2.Graphics;
 import kha.System;
-import graphics.Sprite;
+import kek.graphics.Sprite;
 
 class Entity {
     public var tx:Float;

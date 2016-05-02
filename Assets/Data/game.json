@@ -2,5 +2,5 @@
     "username":"Ola",
     "tickRate": 30,
 	"walkSpeed": 6.0,
-    "serverAddress":"ws://jefvel.net:6648"
+    "serverAddress":"ws://jefvel.net:55432"
 }

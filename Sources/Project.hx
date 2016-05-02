@@ -13,7 +13,8 @@ import zui.Ext;
 
 import kha.input.Gamepad;
 
-import graphics.Sprite;
+import kek.graphics.Sprite;
+import kek.G;
 
 class Project {
 	var guy:Sprite;
