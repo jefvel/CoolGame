@@ -32,8 +32,10 @@ class Entity {
 			return;
 		}
 		g.color = 0xffffffff;
+		
 		sprite.x = x;
 		sprite.y = y;
+		
 		sprite.draw(g);
 	}
 }

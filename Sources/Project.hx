@@ -22,11 +22,9 @@ class Project {
 	
 	var speed = 1.0;
 	var curGuy:Int = 0;
-	var sprites:Array<Sprite>;
 	var players:Map<Int, entity.Entity>;
 	
 	public function new() {
-		sprites = new Array<Sprite>();
 		players = new Map<Int, entity.Entity>();
 
 		Scheduler.addTimeTask(update, 0, 1 / 60);
@@ -51,8 +49,8 @@ class Project {
 		if(ownEntity != null){
 			client.send({
 				id:5,
-				x: ownEntity.x,
-				y: ownEntity.y
+				x: Std.int(ownEntity.x),
+				y: Std.int(ownEntity.y)
 			});
 		}
 	}
@@ -94,12 +92,14 @@ class Project {
 	
 	var client:network.Client;
 	var config:Dynamic;
-	var o:Sprite;
 	var ownEntity:entity.Entity;
 	
 	function loaded(){
-		o = new Sprite(Assets.images.guy);
-		entity.Entity.sprite = o;
+		guy = new Sprite();
+		guy.loadGraphics(Assets.images.guy, 32, 32);
+		
+		entity.Entity.sprite = guy;
+		
 		var o = Assets.blobs.game_json;
 		config = Json.parse(o.toString());
 		
@@ -115,7 +115,7 @@ class Project {
 			Gamepad.get().notify(axis, button);
 		}
 			
-		#if sys_debug_html5
+		#if (sys_debug_html5 || sys_html5)
 		client = new network.Client(onMessage);
 		client.connect(config.serverAddress, function(e:Dynamic) {
 			trace("I am connected!");
@@ -192,7 +192,7 @@ class Project {
 	var curC = 2;
 	function render(framebuffer: Framebuffer): Void {
 		if(ownEntity != null){
-			G.camera.centerOn(ownEntity.x, ownEntity.y);
+			G.camera.moveTowards(ownEntity.x, ownEntity.y);
 		}
 		
 		i = kha.System.time * 1.5;
