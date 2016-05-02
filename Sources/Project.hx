@@ -22,8 +22,23 @@ class Project {
 	var ui:Zui;
 	
 	var speed = 1.0;
-	var curGuy:Int = 0;
 	var players:Map<Int, entity.Entity>;
+		
+	var client:network.Client;
+	var config:Dynamic;
+	var ownEntity:entity.Entity;
+	
+	var mouseY = 0.0;
+	var mouseX = 0.0;
+	var mdown = false;
+	
+	var worldWidth = 0.0;
+	var worldHeight = 0.0;
+	
+	var up = false;
+	var down = false;
+	var left = false;
+	var right = false;
 	
 	public function new() {
 		players = new Map<Int, entity.Entity>();
@@ -70,6 +85,8 @@ class Project {
 	
 	function loggedIn(message:Dynamic) {
 		var e = new entity.Entity(message.playerId, true);
+		worldWidth = message.worldWidth;
+		worldHeight = message.worldHeight;
 		e.x = message.x;
 		e.y = message.y;
 		players.set(e.id, e);
@@ -86,6 +103,8 @@ class Project {
 			var p = players.get(player.id);
 			if(p == null){
 				p = new entity.Entity(player.id);
+				p.x = player.x;
+				p.y = player.y;
 				players.set(p.id, p);
 			}
 			
@@ -95,10 +114,7 @@ class Project {
 			}
 		}
 	}
-	
-	var client:network.Client;
-	var config:Dynamic;
-	var ownEntity:entity.Entity;
+
 	
 	function loaded(){
 		guy = new Sprite();
@@ -108,8 +124,7 @@ class Project {
 		
 		var o = Assets.blobs.game_json;
 		config = Json.parse(o.toString());
-		
-		name = config.username;
+
 		speed = config.walkSpeed;
 		
 		font = Assets.fonts.RobotoCondensed_Regular;
@@ -134,12 +149,61 @@ class Project {
 		if(k == kha.Key.BACK){
 			//System.requestShutdown();
 		}
-
+		
+		switch(k) {
+			case kha.Key.LEFT:
+				left = true;
+			case kha.Key.RIGHT:
+				right = true;
+			case kha.Key.UP:
+				up = true;
+			case kha.Key.DOWN:
+				down = true;
+			default:
+		}
+		
+		if(k == kha.Key.CHAR){
+			switch (i) {
+				case "a": 
+					left = true;
+				case "d":
+					right = true;
+				case "w":
+					up = true;
+				case "s":
+					down = true;
+			}
+		}
 	}
 	
 	function onKeyUp(k:kha.Key, i:String):Void {
 		if(k == kha.Key.BACK){
 			//System.requestShutdown();
+		}
+		
+		switch(k) {
+			case kha.Key.LEFT:
+				left = false;
+			case kha.Key.RIGHT:
+				right = false;
+			case kha.Key.UP:
+				up = false;
+			case kha.Key.DOWN:
+				down = false;
+			default:
+		}
+		
+		if(k == kha.Key.CHAR){
+			switch (i) {
+				case "a": 
+					left = false;
+				case "d":
+					right = false;
+				case "w":
+					up = false;
+				case "s":
+					down = false;
+			}
 		}
 	}
 	
@@ -151,9 +215,6 @@ class Project {
 		
 	}
 	
-	var mouseY = 0.0;
-	var mouseX = 0.0;
-	var mdown = false;
 	public function onMouseDown(button:Int, x: Int, y: Int) {
     	mdown = true;
 	}
@@ -167,16 +228,21 @@ class Project {
 		mouseX = x;
 	}
 
+	var ay = 0.0;
+	var canJump = false;
 	function update(): Void {
 		for(e in players) {
 			e.update();
 		}
 		
 		if(ownEntity != null){
-			if(mdown){
+			var vx = 0.0;
+			var vy = 0.0;
+			ay += 0.2;
+			if(mdown && false){
 				var p = G.camera.screenToWorld(mouseX, mouseY);
-				var vx = p.x - ownEntity.x;
-				var vy = p.y - ownEntity.y;
+				vx = p.x - ownEntity.x;
+				vy = p.y - ownEntity.y;
 				
 				var l = Math.sqrt(vx * vx + vy * vy);
 				vx /= l;
@@ -184,33 +250,59 @@ class Project {
 				
 				vx *= speed;
 				vy *= speed;
+			}else{
+				if(down){
+					//vy += speed;
+				}
+				if(up){
+					//vy -= speed;
+				}
 				
-				ownEntity.x += vx;
-				ownEntity.y += vy;
+				if(right){
+					vx += speed;
+				}
+				if(left){
+					vx -= speed;
+				}
 			}
+			
+			if(canJump && up){
+				ay = -10;
+				canJump = false;
+			}
+			
+			vy += ay;
+			
+			ownEntity.x += vx;
+			ownEntity.y += vy;
+			
+			ownEntity.x = Math.max(32, ownEntity.x);
+			ownEntity.y = Math.max(32, ownEntity.y);
+			
+			ownEntity.x = Math.min(worldWidth - 32, ownEntity.x);
+			
+			ownEntity.y = Math.min(worldHeight - 32, ownEntity.y);
+			
+			if(ownEntity.y > worldHeight - 33) {
+				ay = 0;
+				if(vy >= 0){
+					canJump = true;
+				}
+			}
+			
+			G.camera.moveTowards(ownEntity.x, ownEntity.y);
 		}
 	}
 	
-	var i = 0.0;
-	var name = "Olle";
-	var checked = true;
-	var colors = [0xffD32F2F, 0xff9C27B0, 0xff03A9F4];
-	var curC = 2;
-	function render(framebuffer: Framebuffer): Void {
-		if(ownEntity != null){
-			G.camera.moveTowards(ownEntity.x, ownEntity.y);
-		}
-		
-		i = kha.System.time * 1.5;
-		
+	function render(framebuffer: Framebuffer): Void {		
 		var fb = framebuffer.g2;
-		fb.begin(colors[curC]);
+		fb.begin(0xff03A9F4);
 		fb.color = 0xffffffff;
-		var title = "Super Tech Demo";
+		var title = "";
 		if(ownEntity != null){
-			title += ". (x: " + Std.int(ownEntity.x) + ", y: " + Std.int(ownEntity.y) + ")";
+			title += "(x: " + Std.int(ownEntity.x) + ", y: " + Std.int(ownEntity.y) + ")";
 		}
-		var h = Std.int(System.windowHeight() / 15);
+		var h = Std.int(System.windowHeight() / 25);
 		var w = font.width(h, title);
 		
 		framebuffer.g2.font = font;
@@ -219,9 +311,15 @@ class Project {
 			player.render(fb);
 		}
 		
+		
+		
 		framebuffer.g2.drawString(title, 25, 20);
 		
+		fb.color = kha.Color.White;
+		fb.drawRect(0 - G.camera.ox, 0 - G.camera.oy, worldWidth, worldHeight, 4);
+		
 		fb.end();
+		/*
 		if(mouseY > System.windowHeight() - 220){
 			ui.begin(fb);
 			
@@ -238,5 +336,6 @@ class Project {
 			
 			ui.end();
 		}
+		*/
 	}
 }
