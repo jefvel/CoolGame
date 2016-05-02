@@ -25,7 +25,6 @@ class Camera {
 		
 		ox += dx;
 		oy += dy;
-		
 	}
 	
 	public function centerOn(x:Float, y:Float) {

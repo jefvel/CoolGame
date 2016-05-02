@@ -58,17 +58,22 @@ class Project {
 	private function onMessage(message:Dynamic) {
 		switch(message.id) {
 			case 0:
-				var e = new entity.Entity(message.playerId, true);
-				e.x = message.x;
-				e.y = message.y;
-				players.set(e.id, e);
-				ownEntity = e;
+				loggedIn(message);
 			case 2:
 				removePlayer(message.playerId);
 			case 3:
 				var snapshot:network.Messages.FrameSnapshot = cast message;
 				parseSnapshot(snapshot);
 		}
+	}
+	
+	function loggedIn(message:Dynamic) {
+		var e = new entity.Entity(message.playerId, true);
+		e.x = message.x;
+		e.y = message.y;
+		players.set(e.id, e);
+		G.camera.centerOn(e.x, e.y);
+		ownEntity = e;
 	}
 	
 	function removePlayer(id:Int){
