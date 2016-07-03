@@ -23,6 +23,6 @@ class Main {
 	}
 	
 	static function KhaInit() {
-		new Project();
+		new AudioApp();
 	}
 }
