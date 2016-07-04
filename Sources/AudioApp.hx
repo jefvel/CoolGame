@@ -41,9 +41,11 @@ class AudioApp {
 		setBPM(120.0);
 		kha.Scheduler.addFrameTask(onFrame, 1);
 		kha.System.notifyOnRender(render);
-		Assets.loadFont(Assets.fonts.RobotoCondensed_RegularName, function(f:kha.Font) {
+		/*
+        Assets.loadFont(Assets.fonts.RobotoCondensed_RegularName, function(f:kha.Font) {
 			font = f;
 		});
+        */
 		
 		clipMap = new graphics.ClipMap();
         
@@ -177,84 +179,81 @@ class AudioApp {
 			var sixtyfoursRatio = (tPos / (samplesPerBeat >> 4)) % 1;
 			
 			//if(position + i < sound.uncompressedData.length && position >= 0) {
-				buf.data[i] = 0;
-				//buf.data[i] = sound.uncompressedData[position + i];
-				playing = true;
-			
-				//buf.data[i] += echoBuf[Std.int(echoTicker - echo * 0.5) % echo];
-				
-				if((tPos - tickLen) % (samplesPerBeat >> 1) < tickLen) {
-					if((tPos - tickLen) % samplesPerBeat < tickLen) {
-					//	buf.data[i] += fmBass(tPos, Notes.C7) * 0.1;
-					}else{
-					//	buf.data[i] += fmBass(tPos, Notes.C7) * 0.5;
-					}
-				}
-				
-				var section = Std.int(tPos / (samplesPerBeat * 4));
-				var arp = arps[section % arps.length];
-				var arpSpeed = Std.int(samplesPerBeat / 2);
-				var p = tPos % arpSpeed;
-				
-				var volume = Math.pow(1 - (p / arpSpeed), .9);
-				
-				p *= arp.length;
-				p = Std.int(p / arpSpeed);
-				p = arp.length - 1 - p;
-				
-				var ratio = Std.int(tPos / (samplesPerSecond * 0.66));
-				//if(thirtytwos % 2 == 1) {
-				var v = Math.max(0, Math.min(1.0, Math.max(0.0, ((seconds - TPB * 7 * 4) / (TPB * fadeInTime * 0.1)))));
-				buf.data[i] += saw(tPos, arp[p]) * 0.03 * v * Math.max(0.3, volume);//pulse(tPos, arp[p], ratios[ratio % ratios.length]) * 0.08 * Math.max(0.2, volume);
-				//}
-				//buf.data[i] -= sin(tPos, arp[p]) * 0.1 * volume;
-				//buf.data[i] += sin(tPos, Notes.G3) * 0.1;jkjju
-				//buf.data[i] += sin(tPos, Notes.G2) * 0.1 * Math.min(1.0, seconds / 10) * saw(tPos, Notes.G1);
-				var t = (echoTicker - Std.int(samplesPerSecond * 0.1)) % echo;
-				if(t < 0) {
-					t += echo;
-				}
-				
-				if(bassHits[(sixtyfours >> 1) % bassHits.length] == 1) {
-					var note = bassSections[(currentBeat>>4) % bassSections.length];
-					buf.data[i] += (pulse(tPos, note * ((sixtyfours) % (3) + 1), ratios[sixteenths % ratios.length]) * 0.5) * 0.1 * Math.max(0.5, 1 - sixtyfoursRatio);
-				}else{
-					//buf.data[i] += (sin(tPos, Notes.G1) + square(tPos, Notes.G2) * 0.5) * 0.1 * Math.min(0.5, 1 - sixtyfoursRatio);
-				}
-				buf.data[i] *= 1.6;
-				buf.data[i] += echoBuf[t] * 0.5;
-				
-				
-				//buf.data[i] += sin(tPos, bass[thirtytwos % bass.length]) * 0.2;
-				//buf.data[i] += noise(tPos) * 0.01 * Math.sin(beats * Math.PI / 10.0);
-				
-				buf.data[i] *= Math.min(1.0, Math.max(0.0, (seconds / (fadeInTime * TPB))));
-				
-			
-				echoBuf[echoTicker] = echoBuf[echoTicker] + buf.data[i];
-				echoBuf[echoTicker] *= 0.5;
-									
-				echoTicker ++;
-				if(echoTicker > echo) {
-					echoTicker = 0;
-				}
-			
-			/*} else {
-				buf.data[i] = i % 2 * 2 - 1;
-				playing = false;
-			}
-			*/
+            buf.data[i] = 0;
+           
+            //buf.data[i] = sound.uncompressedData[position + i];
+            playing = true;
+        
+            //buf.data[i] += echoBuf[Std.int(echoTicker - echo * 0.5) % echo];
+            
+            if((tPos - tickLen) % (samplesPerBeat >> 1) < tickLen) {
+                if((tPos - tickLen) % samplesPerBeat < tickLen) {
+                //	buf.data[i] += fmBass(tPos, Notes.C7) * 0.1;
+                }else{
+                //	buf.data[i] += fmBass(tPos, Notes.C7) * 0.5;
+                }
+            }
+            
+            var section = Std.int(tPos / (samplesPerBeat * 4));
+            var arp = arps[section % arps.length];
+            var arpSpeed = Std.int(samplesPerBeat / 2);
+            var p = tPos % arpSpeed;
+            
+            var volume = Math.pow(1 - (p / arpSpeed), .9);
+            
+            p *= arp.length;
+            p = Std.int(p / arpSpeed);
+            p = arp.length - 1 - p;
+            
+            var ratio = Std.int(tPos / (samplesPerSecond * 0.66));
+            //if(thirtytwos % 2 == 1) {
+            var v = Math.max(0, Math.min(1.0, Math.max(0.0, ((seconds - TPB * 7 * 4) / (TPB * fadeInTime * 0.1)))));
+            buf.data[i] += saw(tPos, arp[p]) * 0.03 * v * Math.max(0.3, volume);//pulse(tPos, arp[p], ratios[ratio % ratios.length]) * 0.08 * Math.max(0.2, volume);
+            //}
+            //buf.data[i] -= sin(tPos, arp[p]) * 0.1 * volume;
+            //buf.data[i] += sin(tPos, Notes.G3) * 0.1;jkjju
+            //buf.data[i] += sin(tPos, Notes.G2) * 0.1 * Math.min(1.0, seconds / 10) * saw(tPos, Notes.G1);
+            var t = (echoTicker - Std.int(samplesPerSecond * 0.1)) % echo;
+            if(t < 0) {
+                t += echo;
+            }
+            
+            if(bassHits[(sixtyfours >> 1) % bassHits.length] == 1) {
+                var note = bassSections[(currentBeat>>4) % bassSections.length];
+                buf.data[i] += (pulse(tPos, note * ((sixtyfours) % (3) + 1), ratios[sixteenths % ratios.length]) * 0.5) * 0.1 * Math.max(0.5, 1 - sixtyfoursRatio);
+            }else{
+                //buf.data[i] += (sin(tPos, Notes.G1) + square(tPos, Notes.G2) * 0.5) * 0.1 * Math.min(0.5, 1 - sixtyfoursRatio);
+            }
+            
+            buf.data[i] *= 1.6;
+            buf.data[i] += echoBuf[t] * 0.5;
+            
+            //buf.data[i] += sin(tPos, bass[thirtytwos % bass.length]) * 0.2;
+            //buf.data[i] += noise(tPos) * 0.01 * Math.sin(beats * Math.PI / 10.0);
+            
+            buf.data[i] *= Math.min(1.0, Math.max(0.0, (seconds / (fadeInTime * TPB))));
+        
+            buf.data[i] *= 0.1;     
+        
+            echoBuf[echoTicker] = echoBuf[echoTicker] + buf.data[i];
+            echoBuf[echoTicker] *= 0.5;
+                                        
+            echoTicker ++;
+           
+            if(echoTicker >= echo) {
+                echoTicker = 0;
+            }
 		}
-		
-		for(i in 0...echoBuf.length) {
+	
+        for(i in 0...echoBuf.length) {
 			var lEch = i - 2;
 			
 			lEch %= echo;
 			if(lEch < 0) {
 				lEch += echo;
 			}
-			continue;
-			echoBuf[i] = echoBuf[(lEch) % echo] * 0.2 
+			
+            echoBuf[i] = echoBuf[(lEch) % echo] * 0.2 
 				+ echoBuf[i] * 0.2 
 				+ echoBuf[(lEch + 1) % echo] * 0.2 
 				+ echoBuf[(lEch + 3) % echo] * 0.2
@@ -262,7 +261,8 @@ class AudioApp {
 		}
 		
 		updateTime = haxe.Timer.stamp();
-		if(position < 0) {
+		
+        if(position < 0) {
 			position += samples;
 			if(position > 0) {
 				position = 0;
@@ -336,7 +336,6 @@ class AudioApp {
 		
 		var b = buffer.g2;        
         
-		//if(frequencyPowers[0] > 0.7) {
 		if(songTime % (TPB / 4) < 0.05 && playing){
 			var beat = Std.int(songTime / (TPB / 4));
 			if(beat > currentBeat) {
@@ -345,11 +344,11 @@ class AudioApp {
 			}
 		}
         
-        clipMap.render(buffer);
+        if(clipMap != null && clipMap.render != null) {
+            clipMap.render(buffer);
+        }
 		
-		//}else {
-	    b.begin(false);
-		//}
+        b.begin(false);
 		
 		b.color = kha.Color.White;
 
