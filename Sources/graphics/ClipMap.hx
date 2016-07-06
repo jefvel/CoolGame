@@ -28,8 +28,8 @@ typedef BufferIndexPair = {
 };
 
 typedef ClipMapLevelParams = {
-    worldOriginX:Int,
-    worldOriginY:Int
+    textureOffsetX:Int,
+    textureOffsetY:Int
 };
 
 class ClipMap {
@@ -42,13 +42,15 @@ class ClipMap {
         kha.Color.Green, 
         kha.Color.Red, 
         kha.Color.Blue,
-        kha.Color.Orange];
+        kha.Color.Orange
+    ];
         
-    var levels:Int = 4;
+    var levels:Int = 5;
     var m:Int = 32;
     var n:Int;
     
     var finestDetailSize:Float = 0.1;
+    var largestDetailSize:Float;
     
     //Vertex and index buffers for parts of clipmap
     var lVerts:VertexBuffer;
@@ -90,6 +92,7 @@ class ClipMap {
     var textureUnit:TextureUnit;
     
     var textures:Vector<Image>;
+    var levelParams:Vector<ClipMapLevelParams>;
 
     var mvp:FastMatrix4;
     var startTime:Float;
@@ -118,6 +121,7 @@ class ClipMap {
         pipeline.compile();
         
         n = (m - 1) * 4 + 3;
+        largestDetailSize = (1 << levels) * finestDetailSize;
         
         texWidth = n + 1;
         colorLocation = pipeline.getConstantLocation("color");
@@ -136,13 +140,16 @@ class ClipMap {
         }, 0);
            
         textures = new Vector<Image>(levels);
-        //heightMapUnits = new Vector<TextureUnit>(levels);
+        levelParams = new Vector<ClipMapLevelParams>(levels);
         
         for(i in 0...levels) {
             textures[i] = Image.create(texWidth, texWidth,
             TextureFormat.L8,//kha.graphics4.TextureFormat.A32,
-            Usage.DynamicUsage);    
-            //heightMapUnits[i] = pipeline.getTextureUnit("heightMap" + i);
+            Usage.DynamicUsage);
+            levelParams[i] = {
+                textureOffsetX: 0,
+                textureOffsetY: 0
+            };
         }
         
         textureUnit = pipeline.getTextureUnit("heightMaps");
@@ -279,12 +286,16 @@ class ClipMap {
             indices[si++] = vsi + 2;
             indices[si++] = vsi + 3;
         }
-        
         invLIndices.unlock();
         
-        outerRing = new VertexBuffer((n * 4 * 2),
+        
+        //Create ring of degenerate triangles
+        var ringVertCount = n * 4 - 4;
+        
+        outerRing = new VertexBuffer(ringVertCount * 2,
             structure,
             Usage.StaticUsage);
+        
             
         outerRingIndices = new IndexBuffer((n - 1) * 4 * 3, Usage.StaticUsage);
         
@@ -293,20 +304,24 @@ class ClipMap {
         var ci = 0;
         
         for(i in 0...indices.length) indices[i] = 0;
-        
-        for(i in 0...n) {
-            verts.set(ci++, i);
-            verts.set(ci++, 0.0);
+        for(i in 0...(n >> 1)) {
+            verts.set(ci, i * 1);
+            verts.set(ci + 1, 0.0);
             
-            if(i < n - 1) {
-                verts.set(ci++, i + 0.01);
-                verts.set(ci++, 0.01);
-                
-                indices[i * 3] = (i * 2);
-                indices[i * 3 + 1] = (i * 2) + 2;
-                indices[i * 3 + 2] = (i * 2) + 1;
+            verts.set(ci + ringVertCount * 2, i * 1 + 0.5);
+            verts.set(ci + ringVertCount * 2 + 1, 0);
+            
+            ci += 2;
+            
+            if(i < (n >> 1) - 1) {
+            //if(i < n - 1 ) {
+                indices[i * 3] = (i);
+                indices[i * 3 + 1] = (i) + ringVertCount;
+                indices[i * 3 + 2] = (i) + 1;
             }   
         }
+        
+        /*
         
         for(i in 0...n) {
             verts.set(ci++, i);
@@ -351,6 +366,8 @@ class ClipMap {
             }   
         }
         
+        */
+        
         outerRing.unlock();
         outerRingIndices.unlock();
     }
@@ -364,8 +381,13 @@ class ClipMap {
     }
         
     function renderLevel(level:Int, g:kha.graphics4.Graphics) {
+        var params = levelParams[level];
+        
         g.setInt(levelLocation, level);
-        g.setTexture(textureUnit, textures[level]);    
+        g.setTexture(textureUnit, textures[level]);
+        
+        g.setFloat2(textureOffsetLocation, 
+            params.textureOffsetX, params.textureOffsetY);
         
         g.setTextureParameters(textureUnit,
             TextureAddressing.Repeat,
@@ -398,6 +420,12 @@ class ClipMap {
             g.setIndexBuffer(centerIndices);
             g.drawIndexedVertices();
         }
+        
+                
+        //Draw outer degenerates
+        //g.setVertexBuffer(outerRing);
+        //g.setIndexBuffer(outerRingIndices);
+        //g.drawIndexedVertices();
                
         //Level has a "L" piece
         if(level % 2 == 0) {
@@ -429,13 +457,7 @@ class ClipMap {
             (originX + m - 1) * cellSize, 
             (originY + m - 1) * cellSize);
         g.drawIndexedVertices();
-        
-        //Draw outer degenerates
-        g.setFloat2(offsetLocation, originX * cellSize, originY * cellSize);
-        g.setVertexBuffer(outerRing);
-        g.setIndexBuffer(outerRingIndices);
-        g.drawIndexedVertices();
-      
+
         //Draw main ring
         g.setVertexBuffer(squareVerts);
         g.setIndexBuffer(squareIndices);
@@ -512,10 +534,11 @@ class ClipMap {
     function worldHeight(wx:Float, wz:Float):Float {
         wx *= 0.3;
         wz *= 0.3;
-        return noise.noise2D(wx, wz) * Math.max(0.001, Math.min(1.0, Math.sqrt(wx * wx + wz * wz) * 0.01));
+        //return Math.sin(wx) * Math.cos(wz);
+        return noise.noise2D(wx + 1000, wz + 1000);// * Math.max(0.001, Math.min(1.0, Math.sqrt(wx * wx + wz * wz) * 0.01));
     }
     
-    function updateTextures() {
+    function updateTextures(refresh:Bool = false) {
         var cellSize = 1.0;
         
         var originX = -(n - 1) * 0.5;
@@ -533,51 +556,21 @@ class ClipMap {
             
             multiplier = 1;
             
-            trace(pixels.length);
-            
+            var params = levelParams[level];
             for(x in 0...texWidth) {
                 for(y in 0...texWidth) {
-                    var wx = x * cellSize + originX;
-                    var wy = y * cellSize + originY;
-       
-                    var i = x * texWidth + y;
-                    var h = 0.5 * (
-                        Math.cos(wx * 0.2) + 
-                        Math.sin(wy * 0.2));
-                    h = worldHeight(wx, wy);
-                    /*h = 0.0;
-                    
-                    if(x == 0 && y == 0) {
-                        h = 1.0;
-                    }
-                    
-                    if(x == 0 || y == 0) {
-                    //    h = 1.0;
-                    }
-                     
-                    if(x == n - 1 || y == n - 1) {
-                    //    h = 1.0;
-                    }
-                    
-                    if(x == texWidth - 1 && y == texWidth - 1) {
-                        h = 1.0;
-                    }
-                    */
-                    /*
-                    var ss = 100.0;
-                    if(wx % ss > ss * 0.5) {
-                        if(wy % ss > ss * 0.5) {
-                            h = 1.0;
-                        }
-                    }
-                    */
-                    //h /= 8.0;
-                    //if(pixels.length > i * multiplier + multiplier) {
+                    var wx = (x + params.textureOffsetX) * cellSize + originY;
+                    var wy = (y + params.textureOffsetY) * cellSize + originX;
+    
+                    var i = ((y + params.textureOffsetY) % texWidth) * texWidth + 
+                             (x + params.textureOffsetX) % texWidth;
+                            
+                    var h = worldHeight(wx, wy);
+                
                     pixels.set(i, Std.int(h * 0xff));
-                    //pixels.setFloat(x * multiplier, h);
-                    //}
                 }
             }
+        
           
             texture.unlock();
             
@@ -591,40 +584,48 @@ class ClipMap {
                 originX = originX - (m) * cellSize;
                 originY = originY - (m - 1) * cellSize;
             }
-        }
-        
-  /*
-        for(i in 0...pixels.length) {
-                //var h = Math.cos(x * 0.1) + Math.sin(y * 0.1);
-      //
-        //        pixels.set((x * n + y) * 4 + 3, 0xff);
-          //      pixels.set((x * n + y) * 4 + 4, 0xff);
-            //    pixels.set((x * n + y) * 4 + 6, 0xff);
-              
-              pixels.set(i, 0xff);  
-                //pixels.setFloat((x * n + y) * 4 + 1, 1.0);
-            }
-       // }
-    */    
+        }    
     }
+    
+    function shiftMap(x:Int, z:Int) {
+        var cellShift = 1;
+        for(i in 0...levelParams.length) {
+            var l = levelParams[levelParams.length - 1 - i];
+                 
+            cellShift *= 2;
+            l.textureOffsetX += x * cellShift;
+            l.textureOffsetY += z * cellShift;
+       
+            
+            updateTextures(true);
+        }
+    }
+    
+    var worldOffsetX = 0;
+    var worldOffsetY = 0;
     
     var o = 0.0;
     public function render(buf:kha.Framebuffer) {
-        /*
+        
         cam.pos.y = Math.max(
-            worldHeight(
-                cam.pos.x / finestDetailSize, 
-                cam.pos.z / finestDetailSize) * 50.0 + 0.5, 
+            worldHeight(cam.pos.x, 
+                cam.pos.z) * 50.0 + 0.5, 
                 cam.pos.y);
-        */
+       
         cam.update();
+        var shiftX = Std.int(cam.pos.x / (largestDetailSize * 2));
+        var shiftZ = Std.int(cam.pos.z / (largestDetailSize * 2));
+        if(shiftX != 0 || shiftZ != 0) {
+            shiftMap(shiftX, shiftZ);
+            cam.pos.x += -shiftX * largestDetailSize;
+            cam.pos.z += -shiftZ * largestDetailSize;
+        }
         
         var g4 = buf.g4;
        
         g4.setPipeline(pipeline);
         g4.setFloat(nLocation, n);
         g4.setFloat(timeLocation, time);
-        g4.setFloat2(textureOffsetLocation, o, o);
         g4.setFloat(totalWidthLocation, texWidth);
         g4.setFloat2(offsetLocation, 0.0, 0.0);
         

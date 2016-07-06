@@ -6,7 +6,7 @@ import kha.math.FastMatrix4;
 class FreeCam {
     
     var speed:Float = 0.01;
-    var mouseSensitivity:Float = Math.PI * 2.0 / 1080.0;
+    var mouseSensitivity:Float = Math.PI / 2160.0;
     
     public var pos:FastVector3;
     public var dir:FastVector3;
@@ -147,13 +147,6 @@ class FreeCam {
         
         
         return m;
-        //return FastMatrix4.fromMatrix4(q.matrix);
-        
-        /*FastMatrix4.lookAt(
-            pos, 
-            pos.add(dir),
-            up);
-            */
     }
     
 }

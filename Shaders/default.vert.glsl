@@ -28,10 +28,11 @@ void kore() {
     uv  = pos * scale + offset;
     uv -= origin;
     
-    uv += textureOffset;
     uv /= scale;
+  
     
     vec2 localCoord = vec2(floor(uv.x + 0.0001), floor(uv.y + 0.0001));
+    uv += textureOffset;
     uv /= totalWidth;
     
     //uv += (1.0 / totalWidth) * 0.01;
@@ -94,7 +95,14 @@ void kore() {
         height,
         (pos.y) * scale + offset.y, 1.0);
         
+    
+    
+    //wpos.y += mod(pos.x, 1.0) * 0.001;
+    //wpos.y += mod(pos.y, 1.0) * 0.001;
+        
     col.rgb = vec3(wpos.xyz);
+    col.r = max(mod(pos.x, 1.0), mod(pos.y, 1.0));
+    wpos.y = clamp(wpos.y, 0.0, 1.0);
     wpos.y *= 50.0;
     
     wpos = MVP * wpos;
