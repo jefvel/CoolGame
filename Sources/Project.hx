@@ -55,10 +55,9 @@ class Project {
 				trace("KHA DYING!");
 		});
 		
-		#if sys_windows
+		#if (sys_windows && nopenope)
 		var i = new Server();
 		#end
-	
 	}
 	
 	function sendUpdate() {

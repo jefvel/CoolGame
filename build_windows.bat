@@ -1,4 +1,4 @@
-node Kha/make windows --visualstudio vs2013
+node Kha/make windows --visualstudio vs2015
 ::--compile
 ::cd build/windows
 ::Bonk.exe

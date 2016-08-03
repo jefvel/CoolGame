@@ -14,18 +14,7 @@ class Server {
             trace("An error occurred while initializing ENet.");
             return;
         }
-        
-        var address:ENetAddress = null;
-        address.port = 1234;
-        address.host = 0;//ENet.ENET_HOST_ANY;
-               
-        var server = ENet.createHost(cast address);//, 32, 0, 0);
-        
-      
-        Scheduler.addFrameTask(update, 1);
-        //trace(h.peerCount);
-        
-
+    
         var adr:ENetAddress = null;
         adr.host = ENet.ENET_HOST_ANY;
         adr.port = 1234;
@@ -47,7 +36,7 @@ class Server {
     
     private function update() {
        // var eventStatus = ENet.hostService(cast server, cast event, 50);
-        /*if (eventStatus > 0) {
+        if (eventStatus > 0) {
 
             var peer = event.peer; 
             var adress = peer.address; 
@@ -75,4 +64,5 @@ class Server {
             }
         }     
     }
-}*/
+}
+*/
