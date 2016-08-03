@@ -29,10 +29,18 @@ typedef BufferIndexPair = {
 
 typedef ClipMapLevelParams = {
     textureOffsetX:Int,
-    textureOffsetY:Int
+    textureOffsetY:Int,
+    originWorldX:Int,
+    originWorldY:Int,
+    heightMapValues:haxe.io.Bytes,
+    requiresFullUpdate:Bool,
+    lastOffsetX:Int,
+    lastOffsetY:Int,
+    cellSize:Int
 };
 
 class ClipMap {
+
     var noise:PerlinNoise;
     var pipeline:PipelineState;
     var structure:VertexStructure;
@@ -45,7 +53,7 @@ class ClipMap {
         kha.Color.Orange
     ];
         
-    var levels:Int = 5;
+    var levels:Int = 2;
     var m:Int = 32;
     var n:Int;
     
@@ -100,6 +108,7 @@ class ClipMap {
     var cam:FreeCam;
     var texWidth:Int;
     
+    
 	public function new() {
         cam = new FreeCam();
         cam.pos.y = 3.0;
@@ -148,7 +157,14 @@ class ClipMap {
             Usage.DynamicUsage);
             levelParams[i] = {
                 textureOffsetX: 0,
-                textureOffsetY: 0
+                textureOffsetY: 0,
+                heightMapValues:haxe.io.Bytes.alloc(texWidth * texWidth),
+                requiresFullUpdate: true,
+                lastOffsetX:0,
+                lastOffsetY:0,
+                originWorldX:0,
+                originWorldY:0,
+                cellSize:1 << i
             };
         }
         
@@ -159,7 +175,7 @@ class ClipMap {
         
         generateBuffers();
         
-        updateTextures();
+        centerOn(10000, 8000);
     }
     
     function generateSquareBuffer(){
@@ -532,97 +548,194 @@ class ClipMap {
     }
     
     function worldHeight(wx:Float, wz:Float):Float {
-        wx *= 0.3;
-        wz *= 0.3;
-        //return Math.sin(wx) * Math.cos(wz);
+        wx *= 0.1;
+        wz *= 0.1;
+        //return Math.abs(Math.sin(wx) + Math.cos(wz)) * 0.4;
         return noise.noise2D(wx + 1000, wz + 1000);// * Math.max(0.001, Math.min(1.0, Math.sqrt(wx * wx + wz * wz) * 0.01));
     }
     
-    function updateTextures(refresh:Bool = false) {
-        var cellSize = 1.0;
+    function centerOn(worldX:Int, worldY:Int) {
+        var originX:Int = worldX - (n >> 2);
+        var originY:Int =  worldY - (n >> 2);
         
-        var originX = -(n - 1) * 0.5;
-        var originY = -(n - 1) * 0.5;
-        
-        originX = 0;
-        originY = 0;
-        
-        var level = 0;
-         
-        for(texture in textures) {
-            
-            var pixels = texture.lock();
-            var multiplier = 1;
-            
-            multiplier = 1;
-            
+        for(level in 0...levels) {
             var params = levelParams[level];
-            for(x in 0...texWidth) {
-                for(y in 0...texWidth) {
-                    var wx = (x + params.textureOffsetX) * cellSize + originY;
-                    var wy = (y + params.textureOffsetY) * cellSize + originX;
-    
-                    var i = ((y + params.textureOffsetY) % texWidth) * texWidth + 
-                             (x + params.textureOffsetX) % texWidth;
-                            
-                    var h = worldHeight(wx, wy);
-                
-                    pixels.set(i, Std.int(h * 0xff));
+            if(level != 0){
+                if((level + 1) % 2 == 0) {
+                    originX = originX - (m - 1) * params.cellSize;
+                    originY = originY - (m) * params.cellSize;
+                } else {    
+                    originX = originX - (m) * params.cellSize;
+                    originY = originY - (m - 1) * params.cellSize;
                 }
             }
+            
+            params.originWorldX = originX;
+            params.originWorldY = originY;
+            
+            params.textureOffsetX = 0;
+            params.textureOffsetY = 0;
+            
+            params.requiresFullUpdate = true;   
+        }
         
-          
-            texture.unlock();
+        updateTextures();
+    }
+    
+    function updateTextures(refresh:Bool = false) {
+        for(level in 0...levels) {
+            var texture = textures[level];
+            var pixels = texture.lock();
             
-            cellSize *= 2.0;
+            var params = levelParams[level];
             
-            level ++;
-            if(level % 2 == 0) {
-                originX = originX - (m - 1) * cellSize;
-                originY = originY - (m) * cellSize;
-            } else {    
-                originX = originX - (m) * cellSize;
-                originY = originY - (m - 1) * cellSize;
+            if(params.requiresFullUpdate || true) {
+                for(x in 0...texWidth) {
+                    for(y in 0...texWidth) {
+                        var wx:Float = ((x) * params.cellSize) + params.textureOffsetX + params.originWorldX;
+                        if(x < params.textureOffsetX){
+                            wx += params.cellSize * texWidth;
+                        }
+                        
+                        
+                        if(x < params.textureOffsetX) {
+                            wx += texWidth * params.cellSize;
+                        }
+                        
+                        
+                        var wy:Float = ((y) * params.cellSize + params.textureOffsetX + params.originWorldY);
+                        if(y < params.textureOffsetY){
+                            wy += params.cellSize * texWidth;
+                        }
+                        
+                        
+                        if(y < params.textureOffsetY) {
+                            wy += texWidth * params.cellSize;
+                        } 
+                        
+                        
+                        var i = y * texWidth + x;
+                        var h = worldHeight(wx, wy);
+                        
+                        params.heightMapValues.set(i, Std.int(h * 0xff));
+                    }
+                }
+            } else {
+                var sx = params.textureOffsetX - params.lastOffsetX;
+                var sy = params.textureOffsetY - params.lastOffsetY;
+
+                if(sx != 0) {
+                    var startX = params.lastOffsetX;
+                    var endX = startX + Std.int(Math.abs(sx));
+                                      
+                    for(y in 0...texWidth){
+                        for(x in 0...texWidth) { 
+                            var texX = (x + params.textureOffsetX) % texWidth;
+                            var texY = (y + params.textureOffsetY) % texWidth;
+                            
+                            if(texX > endX || texX < startX) {
+                                continue;
+                            }
+                            
+                            var wx = (x + params.textureOffsetX);
+                            var wy = (y + params.textureOffsetY);
+            
+                            var i =  texY * texWidth + 
+                                    texX;
+                                    
+                            var h = worldHeight(wx, wy);
+                            
+                            //h = 0.0;
+                            
+                            params.heightMapValues.set(i, Std.int(h * 0xff));
+                        }
+                    }
+                }
+                
+                if(sy != 0) {
+                    var startY = params.lastOffsetY;
+                    var endY = startY + Std.int(Math.abs(sy));
+                    
+                    
+                    for(y in 0...texWidth) {
+                        for(x in 0...texWidth) {
+                            var texX = (x + params.textureOffsetX) % texWidth;
+                            var texY = (y + params.textureOffsetY) % texWidth;
+                            
+                            if(texY > endY || texY < startY) {
+                                continue;
+                            }
+                            
+                            var wx = (x + params.textureOffsetX);
+                            var wy = (y + params.textureOffsetY);
+            
+                            var i =  texY * texWidth + texX;
+                                    
+                            var h = worldHeight(wx, wy);
+                            
+                            params.heightMapValues.set(i, Std.int(h * 0xff));
+                        }
+                    }
+                }
             }
+            
+            params.requiresFullUpdate = false;
+            
+            params.lastOffsetX = params.textureOffsetX;
+            params.lastOffsetY = params.textureOffsetY;
+            
+            pixels.blit(0, params.heightMapValues, 0, pixels.length);
+    
+            texture.unlock();
         }    
     }
     
     function shiftMap(x:Int, z:Int) {
         var cellShift = 1;
+        worldOffsetX += x;
+        worldOffsetY += z;
+        
         for(i in 0...levelParams.length) {
-            var l = levelParams[levelParams.length - 1 - i];
-                 
-            cellShift *= 2;
-            l.textureOffsetX += x * cellShift;
-            l.textureOffsetY += z * cellShift;
-       
+            var l = levelParams[i];//levelParams.length - 1 - i];
+         
             
-            updateTextures(true);
+            l.originWorldX += x * cellShift;
+            l.originWorldY += z * cellShift;
+            
+            //l.textureOffsetX += x * cellShift;
+            l.textureOffsetX %= texWidth;
+            
+            //l.textureOffsetY += z * cellShift;
+            l.textureOffsetY %= texWidth;
+            cellShift *= 2;
+            
         }
+        
+        updateTextures(true);
     }
     
     var worldOffsetX = 0;
     var worldOffsetY = 0;
     
     var o = 0.0;
-    public function render(buf:kha.Framebuffer) {
+    public function render(g4:kha.graphics4.Graphics) {
         
         cam.pos.y = Math.max(
-            worldHeight(cam.pos.x, 
-                cam.pos.z) * 50.0 + 0.5, 
+            worldHeight(
+                cam.pos.x + largestDetailSize * worldOffsetX, 
+                cam.pos.z + largestDetailSize * worldOffsetY) * 30.0 + 0.5, 
                 cam.pos.y);
        
         cam.update();
-        var shiftX = Std.int(cam.pos.x / (largestDetailSize * 2));
-        var shiftZ = Std.int(cam.pos.z / (largestDetailSize * 2));
+        
+        var shiftX = Std.int(cam.pos.x / (largestDetailSize ));
+        var shiftZ = Std.int(cam.pos.z / (largestDetailSize ));
         if(shiftX != 0 || shiftZ != 0) {
             shiftMap(shiftX, shiftZ);
             cam.pos.x += -shiftX * largestDetailSize;
             cam.pos.z += -shiftZ * largestDetailSize;
         }
         
-        var g4 = buf.g4;
-       
         g4.setPipeline(pipeline);
         g4.setFloat(nLocation, n);
         g4.setFloat(timeLocation, time);
@@ -630,7 +743,7 @@ class ClipMap {
         g4.setFloat2(offsetLocation, 0.0, 0.0);
         
         //Camera things
-        var a = buf.width / buf.height;
+        var a = kha.ScreenCanvas.the.width / kha.ScreenCanvas.the.height;
         mvp = FastMatrix4.perspectiveProjection(90.0, a, 0.001, 1000.0);
         var camMat = cam.matrix;  
         camMat = mvp.multmat(camMat);
@@ -638,7 +751,7 @@ class ClipMap {
         g4.setMatrix(mvpLocation, camMat);
         
         g4.begin();
-        g4.clear(kha.Color.fromFloats(0.74, 0.74, 0.74), 1.0);
+        g4.clear(kha.Color.fromFloats(0.1, 0.1, 0.1), 1.0);
             
         startLevels();
         for(level in 0...levels) {

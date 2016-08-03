@@ -25,42 +25,35 @@ class FreeCam {
     
     var multiplier = 1.0;
     public var matrix(get, null):FastMatrix4;
+    var mDown = false;
     
     public function new() {
         up = new FastVector3(0.0, 1.0, 0.0);
         pos = new FastVector3(0.0, 0.1, 0.0);
-        dir = new FastVector3(0, 0, 1.0);        
+        dir = new FastVector3(0, 0, 1.0);
     
         updateDir();
         
-        kha.SystemImpl.lockMouse();
+        //kha.SystemImpl.lockMouse();
         
         kha.input.Mouse.get().notify(
         function(button, x, y) {
-            if(button == 0) {
-                moveForward = true;
-            }
-            if(button == 1) {
-                moveBackward = true;
-            }
+            mDown = true;
             kha.SystemImpl.lockMouse();
         }, function(button, x, y) {
-            if(button == 0) {
-                moveForward = false;
-            }
-            if(button == 1) {
-                moveBackward = false;
-            }
+            mDown = false;
+            kha.SystemImpl.unlockMouse();
         }, 
         function(x, y, dx, dy) {
-                 
-            yaw += -dx * mouseSensitivity;
-            yaw = yaw % (Math.PI * 2.0);
+            if(mDown) {
+                yaw += -dx * mouseSensitivity;
+                yaw = yaw % (Math.PI * 2.0);
+                
+                pitch += -dy * mouseSensitivity;
+                pitch = clamp(pitch, -Math.PI * 0.5 + 0.001, Math.PI * 0.5- 0.001);
             
-            pitch += -dy * mouseSensitivity;
-            pitch = clamp(pitch, -Math.PI * 0.5 + 0.001, Math.PI * 0.5- 0.001);
-        
-            updateDir();    
+                updateDir();  
+            }  
          }, null);
         
         kha.input.Keyboard.get().notify(function(key:kha.Key, v:String) {

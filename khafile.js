@@ -21,4 +21,4 @@ project.addLibrary("kek");
 
 project.addSources('Sources');
 
-return project;
+resolve(project);

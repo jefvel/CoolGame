@@ -32,10 +32,10 @@ void kore() {
   
     
     vec2 localCoord = vec2(floor(uv.x + 0.0001), floor(uv.y + 0.0001));
-    uv += textureOffset;
+    uv -= textureOffset;
     uv /= totalWidth;
     
-    //uv += (1.0 / totalWidth) * 0.01;
+    uv += (1.0 / totalWidth) * 0.01;
     //uv.x += (1.0 / totalWidth) * 0.5;
     
     vec4 h = texture2D(heightMaps, uv);
@@ -104,6 +104,7 @@ void kore() {
     col.r = max(mod(pos.x, 1.0), mod(pos.y, 1.0));
     wpos.y = clamp(wpos.y, 0.0, 1.0);
     wpos.y *= 50.0;
+    wpos.y = min(50.0, wpos.y);
     
     wpos = MVP * wpos;
     

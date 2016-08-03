@@ -4,7 +4,9 @@ import kek.audio.AudioGenerator;
 
 class AudioApp {
     
-    var clipMap:graphics.ClipMap;
+    var clipMap:graphics.ClipMap;    
+    var postFX:graphics.PostprocessingBuffer;
+    
 	
 	var sound:kha.Sound;
 	var position:Int;
@@ -48,6 +50,7 @@ class AudioApp {
         */
 		
 		clipMap = new graphics.ClipMap();
+        postFX = new graphics.PostprocessingBuffer();
         
         initSound();
         
@@ -344,10 +347,16 @@ class AudioApp {
 			}
 		}
         
-        if(clipMap != null && clipMap.render != null) {
-            clipMap.render(buffer);
+        if(postFX != null) {
+            postFX.begin(buffer);
         }
-		
+        
+        if(clipMap != null && clipMap.render != null) {
+            clipMap.render(postFX.graphics);
+        }
+        
+        postFX.end(buffer);
+        		
         b.begin(false);
 		
 		b.color = kha.Color.White;
