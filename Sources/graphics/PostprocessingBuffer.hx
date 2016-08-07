@@ -50,7 +50,6 @@ class PostprocessingBuffer {
         1, 2, 3
     ];
     
-    
     var startTime:Float;
     
     public function new() {            
@@ -110,8 +109,9 @@ class PostprocessingBuffer {
             }
             
             texture = kha.Image.createRenderTarget(
-                nearestPowerOfTwo(f.width >> 2), 
-                nearestPowerOfTwo(f.height >> 2),
+                f.width, f.height,
+                //nearestPowerOfTwo(f.width >> 2), 
+                //nearestPowerOfTwo(f.height >> 2),
                 TextureFormat.RGBA32, 
                 kha.graphics4.DepthStencilFormat.DepthOnly, 0);
         }
@@ -130,6 +130,7 @@ class PostprocessingBuffer {
         g4.setFloat2(screenSizeLocation, kanvas.width, kanvas.height);
         g4.setTexture(texUnit, texture);
         
+        /*
         g4.setTextureParameters(texUnit, 
             TextureAddressing.Repeat, 
             TextureAddressing.Repeat, 
@@ -137,6 +138,7 @@ class PostprocessingBuffer {
             TextureFilter.PointFilter, 
             MipMapFilter.NoMipFilter
         );
+        */
        
         g4.clear(kha.Color.White);
         g4.setVertexBuffer(vBuf);

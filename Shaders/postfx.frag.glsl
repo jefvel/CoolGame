@@ -29,5 +29,6 @@ void main() {
     //color.rgb = vec3(depth / 2.0);
     
     color.a = 1.0;
+    
     gl_FragColor = color;
 }

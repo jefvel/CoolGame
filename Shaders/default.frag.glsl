@@ -24,9 +24,7 @@ void main() {
 
     gl_FragColor = color;
     
-       
     if(gl_FragCoord.x < totalWidth && gl_FragCoord.y < totalWidth ) {
-        gl_FragColor.rgb = texture2D(heightMaps, gl_FragCoord.xy / totalWidth).xxx;
+        gl_FragColor.rgb = texture2D(heightMaps, gl_FragCoord.xy / totalWidth).aaa;
     }
-    
 }

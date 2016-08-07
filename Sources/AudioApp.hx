@@ -355,6 +355,9 @@ class AudioApp {
             clipMap.render(postFX.graphics);
         }
         
+        b.fillRect(0, 0, 128, 128);
+		b.drawImage(clipMap.getLevelTexture(0), 0, 0);
+        
         postFX.end(buffer);
         		
         b.begin(false);

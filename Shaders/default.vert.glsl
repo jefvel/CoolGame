@@ -18,6 +18,7 @@ uniform float scale;
 uniform mat4 MVP;
 
 uniform sampler2D heightMaps;
+uniform float smoothing;
 
 varying vec3 col;
 varying vec3 _pos;
@@ -27,21 +28,20 @@ void kore() {
     
     uv  = pos * scale + offset;
     uv -= origin;
-    
     uv /= scale;
-  
     
     vec2 localCoord = vec2(floor(uv.x + 0.0001), floor(uv.y + 0.0001));
-    uv -= textureOffset;
+    uv += textureOffset;
     uv /= totalWidth;
     
     uv += (1.0 / totalWidth) * 0.01;
     //uv.x += (1.0 / totalWidth) * 0.5;
     
     vec4 h = texture2D(heightMaps, uv);
+    float localHeight = h.a;
         
-    col = vec3(sin(h.x * 20.0 + time * 3.0));
-    col.r = h.x;    
+    col = vec3(sin(localHeight * 20.0 + time * 3.0));
+    col.r = localHeight;    
     col = h.rgb;
     
     _pos = vec3(uv, 0.0);
@@ -65,11 +65,11 @@ void kore() {
     
     vec2 interpHeight;
     interpHeight.x = 
-        texture2D(heightMaps, uv - vec2(1.0 / totalWidth, 0.0)).x +
-        texture2D(heightMaps, uv + vec2(1.0 / totalWidth, 0.0)).x;
+        texture2D(heightMaps, uv - vec2(1.0 / totalWidth, 0.0)).a +
+        texture2D(heightMaps, uv + vec2(1.0 / totalWidth, 0.0)).a;
     interpHeight.y = 
-        texture2D(heightMaps, uv - vec2(0.0, 1.0 / totalWidth)).x +
-        texture2D(heightMaps, uv + vec2(0.0, 1.0 / totalWidth)).x;
+        texture2D(heightMaps, uv - vec2(0.0, 1.0 / totalWidth)).a +
+        texture2D(heightMaps, uv + vec2(0.0, 1.0 / totalWidth)).a;
     interpHeight /= 2.0;
     
     vec2 ratios = vec2(
@@ -84,24 +84,29 @@ void kore() {
     interpHeight.x = max(interpHeight.x, interpHeight.y);
     interpHeight.x = 
         interpHeight.x * inbetween + 
-        h.x * (1.0 - inbetween);
+        localHeight * (1.0 - inbetween);
     
     col.rg = ratios;
     col.b = a.x;
     
-    float height = h.x * (1.0 - a.x) + interpHeight.x * a.x;
+    float height = localHeight * (1.0 - a.x) + interpHeight.x * a.x;
+    
+    height = mix(localHeight, height, smoothing);
+
     vec4 wpos = vec4(
         (pos.x) * scale + offset.x,
         height,
         (pos.y) * scale + offset.y, 1.0);
         
     
-    
     //wpos.y += mod(pos.x, 1.0) * 0.001;
     //wpos.y += mod(pos.y, 1.0) * 0.001;
         
     col.rgb = vec3(wpos.xyz);
     col.r = max(mod(pos.x, 1.0), mod(pos.y, 1.0));
+    
+    //wpos.y = localHeight;
+    
     wpos.y = clamp(wpos.y, 0.0, 1.0);
     wpos.y *= 50.0;
     wpos.y = min(50.0, wpos.y);
