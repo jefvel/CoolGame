@@ -37,7 +37,11 @@ void main() {
     */
     //color.rgb = vec3(depth / 2.0);
     
+    //color *= max(0.6, mod(gl_FragCoord.x, 1.0) * mod(gl_FragCoord.y, 1.0));
+    float sky = 1.0 - color.a;
     color.a = 1.0;
-    
+    vec3 skyColor = mix(vec3(201,233,246), vec3(69,179,224), pow(uv.y, 2.1));
+    skyColor /= 255.0;
+    color.rgb = mix(color.rgb, skyColor, sky); 
     gl_FragColor = color;
 }

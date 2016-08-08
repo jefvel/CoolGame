@@ -12,7 +12,10 @@ uniform sampler2D heightMaps;
 uniform float totalWidth;
 uniform float time;
 
+
+
 void main() {
+    float height = col.y;
     vec4 color = vec4(0.0, col.y, 0.0, 1.0);
     color.r += sin(color.r * 10.1 + time);
     color.g += cos(color.g * 20.2 + time * 2.0);
@@ -21,5 +24,28 @@ void main() {
     color.a = gl_FragCoord.z;
     
     gl_FragColor = texture2D(heightMaps, _pos.xy);
+
+    
+    vec3 col = vec3(206,235,135);
+    col /= 255.0;
+    vec3 col2 = vec3(141,186,31);
+    col2 /= 255.0;
+    vec3 col3 = vec3(179,224,69);
+    col3 /= 255.0;
+
+    float steps = 2.0;
+    float os = 0.0 * min(1.0, mod(time * 0.5, 1.0));
+
+    float segment = (height + os * 3.0) / steps;
+
+    segment = floor(mod(segment, 3.0));
+
+    color.rgb = vec3(0.0);
+    color.rgb += max(0.0, 1.0 - (segment)) * col2;
+    color.rgb += max(0.0, 1.0 - abs(1.0 - segment) * 100.0) * col3;
+    color.rgb += max(0.0, 1.0 - abs(2.0 - segment) * 100.0) * col;
+
+    //color.rgb *= col;//vec3(1.0 / 255.0, 142.0 / 255.0, 14.0 / 255.0);
+    //color.rgb = mix(col, col2, height * 2.0);
     gl_FragColor = color;
 }

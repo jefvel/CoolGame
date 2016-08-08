@@ -109,9 +109,9 @@ void kore() {
     
     //wpos.y = localHeight;
     
-    wpos.y = clamp(wpos.y, 0.0, 5.0);
-    wpos.y *= 50.0;
-    wpos.y = min(150.0, wpos.y);
+    //wpos.y = clamp(wpos.y, 0.0, 5.0);
+    //wpos.y *= 150.0;
+    //wpos.y = min(150.0, wpos.y);
     
     wpos = MVP * wpos;
     

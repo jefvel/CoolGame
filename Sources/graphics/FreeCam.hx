@@ -94,8 +94,10 @@ class FreeCam {
     
     function updateDir() {
         var ratio = Math.abs(Math.cos(pitch));
+        
         dir.x = Math.sin(yaw + Math.PI) * ratio;
         dir.z = Math.cos(yaw + Math.PI) * ratio;
+        
         dir.y = Math.sin(pitch);
     
         dir.normalize();

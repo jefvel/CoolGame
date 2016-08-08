@@ -51,11 +51,11 @@ class ClipMap {
         kha.Color.Orange
     ];
         
-    var levels:Int = 6;
+    var levels:Int = 5;
     var m:Int = 32;
     var n:Int;
     
-    var finestDetailSize:Float = 0.1;
+    var finestDetailSize:Float = 1.0;
     var largestDetailSize:Float;
     
     //Vertex and index buffers for parts of clipmap
@@ -108,7 +108,6 @@ class ClipMap {
     
 	public function new() {
         cam = new FreeCam();
-        cam.pos.y = 3.0;
         noise = new PerlinNoise();
         
         startTime = haxe.Timer.stamp();
@@ -173,7 +172,7 @@ class ClipMap {
         
         generateBuffers();
         
-        centerOn(0, 0);
+        centerOn(100, 100);
     }
     
     public function getLevelTexture(level:Int = 0):Image {
@@ -548,18 +547,18 @@ class ClipMap {
     }
     
     function worldHeight(wx:Float, wz:Float):Float {
-        wx *= 0.6;
-        wz *= 0.6;
+        var wxf = wx * 0.6;
+        var wzf = wz * 0.6;
         //return Math.abs(Math.sin(wx) + Math.cos(wz)) * 0.4;
-        var offset = Math.sin(wx * 0.001) * Math.cos(wz * 0.001) * 0.5;
-        return noise.noise2D(wx + 1000, wz + 1000) + offset;// * Math.max(0.001, Math.min(1.0, Math.sqrt(wx * wx + wz * wz) * 0.01));
+        var offset = Math.sin(wxf * 0.001) * Math.cos(wzf * 0.001) * 0.5;
+        return (noise.noise2D(wxf, wzf) + offset) * 150.0;// * Math.max(0.001, Math.min(1.0, Math.sqrt(wx * wx + wz * wz) * 0.01));
     }
     
     var cameraX = 0.0;
     var cameraZ = 0.0;
     function centerOn(worldX:Int, worldY:Int) {
-        var originX:Int = worldX - (n >> 2);
-        var originY:Int = worldY - (n >> 2);
+        var originX:Int = worldX - (n >> 1);
+        var originY:Int = worldY - (n >> 1);
         
         cameraX = worldX;
         cameraZ = worldY;
@@ -606,8 +605,8 @@ class ClipMap {
 
                 for(x in 0...texWidth) {
                     for(y in 0...texWidth) {
-                        var wx:Float = (x * params.cellSize) + params.originWorldX;
-                        var wy:Float = (y * params.cellSize) + params.originWorldY;
+                        var wx:Int = (x * params.cellSize) + params.originWorldX;
+                        var wy:Int = (y * params.cellSize) + params.originWorldY;
                         
                         var i = y * texWidth + x;
                         var h = worldHeight(wx, wy);
@@ -722,9 +721,6 @@ class ClipMap {
     
     function shiftMap(x:Int, z:Int) {
         var cellShift = 1;
-        worldOffsetX += x;
-        worldOffsetY += z;
-        
         for(i in 0...levelParams.length) {
             var l = levelParams[levelParams.length - 1 - i];
             
@@ -736,32 +732,37 @@ class ClipMap {
             
             cellShift *= 2;
         }
+            
+        cameraX += x * largestDetailSize;
+        cameraZ += z * largestDetailSize;
+
+        cam.pos.x += -x * largestDetailSize;
+        cam.pos.z += -z * largestDetailSize;
+        
+        trace("World pos: x", cam.pos.x + cameraX, ", z", cam.pos.z + cameraZ);
+        
         updateTextures(true);
     }
     
-    var worldOffsetX = 0;
-    var worldOffsetY = 0;
-    
-    var o = 0.0;
     public function render(g4:kha.graphics4.Graphics) {
+        cam.update();
+        
         cam.pos.y = Math.max(
             worldHeight(
-                (cam.pos.x + cameraX) / finestDetailSize, 
-                (cam.pos.z + cameraZ) / finestDetailSize) * 50.0 + 0.5, 
-                cam.pos.y);
+                (cam.pos.x + cameraX) / finestDetailSize,
+                (cam.pos.z + cameraZ) / finestDetailSize
+            ) + 0.5, cam.pos.y);
+            
+        cam.pos.y = worldHeight(
+                (cam.pos.x + cameraX) / finestDetailSize,
+                (cam.pos.z + cameraZ) / finestDetailSize) + 1.0 + Math.sin(time) * 0.1;
        
-        cam.update();
         
         var shiftX = Std.int(cam.pos.x / (largestDetailSize));
         var shiftZ = Std.int(cam.pos.z / (largestDetailSize));
         
         if(shiftX != 0 || shiftZ != 0) {
             shiftMap(shiftX, shiftZ);
-            cameraX += shiftX * largestDetailSize;
-            cameraZ += shiftZ * largestDetailSize;
-
-            cam.pos.x += -shiftX * largestDetailSize;
-            cam.pos.z += -shiftZ * largestDetailSize;
         }
         
         g4.setPipeline(pipeline);
@@ -781,8 +782,9 @@ class ClipMap {
         g4.setMatrix(mvpLocation, camMat);
         
         g4.begin();
-        g4.clear(kha.Color.fromFloats(0.1, 0.1, 0.1), 1.0);
-            
+        
+        g4.clear(kha.Color.fromBytes(252,190,65, 0), 1.0);
+        
         startLevels();
         for(level in 0...levels) {
             if(level + 1 == levels) {

@@ -350,20 +350,20 @@ class AudioApp {
         if(postFX != null) {
             postFX.begin(buffer);
         }
-        
+
         if(clipMap != null && clipMap.render != null) {
             clipMap.render(postFX.graphics);
         }
         
-        b.fillRect(0, 0, 128, 128);
-		b.drawImage(clipMap.getLevelTexture(0), 0, 0);
+        //b.fillRect(0, 0, 128, 128);
+		//b.drawImage(clipMap.getLevelTexture(0), 0, 0);
         
         postFX.end(buffer);
         		
         b.begin(false);
 		
 		b.color = kha.Color.White;
-
+		/*
 		var x = 0;// Math.cos(haxe.Timer.stamp()) * 100;
 		var rd = Math.PI * 2 / frequencyPowers.length;
 		for(i in 0...frequencyPowers.length) {
@@ -379,7 +379,7 @@ class AudioApp {
 					   x + c * (r + p * 150),
 					   y + s * (r + p * 150), 2 + randomSize);
 		}
-		
+		*/
 		b.end();
 	}
 	
