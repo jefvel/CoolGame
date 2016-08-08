@@ -1,4 +1,4 @@
-node Kha/make windows --visualstudio vs2015 --graphics opengl --opengl
+node Kha/make windows --visualstudio vs2015
 ::--compile
 ::cd build/windows
 ::Bonk.exe

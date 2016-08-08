@@ -27,10 +27,12 @@ void kore() {
     vec2 uv;
     
     uv  = pos * scale + offset;
+    vec2 worldPos = uv;
     uv -= origin;
     uv /= scale;
     
     vec2 localCoord = vec2(floor(uv.x + 0.0001), floor(uv.y + 0.0001));
+    
     uv += textureOffset;
     uv /= totalWidth;
     
@@ -107,9 +109,9 @@ void kore() {
     
     //wpos.y = localHeight;
     
-    wpos.y = clamp(wpos.y, 0.0, 1.0);
+    wpos.y = clamp(wpos.y, 0.0, 5.0);
     wpos.y *= 50.0;
-    wpos.y = min(50.0, wpos.y);
+    wpos.y = min(150.0, wpos.y);
     
     wpos = MVP * wpos;
     

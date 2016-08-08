@@ -95,7 +95,6 @@ class ClipMap {
     var totalWidthLocation:ConstantLocation;
     var textureOffsetLocation:ConstantLocation;
     
-    //var heightMapUnits:Vector<TextureUnit>;
     var textureUnit:TextureUnit;
     
     var textures:Vector<Image>;
@@ -106,7 +105,6 @@ class ClipMap {
     
     var cam:FreeCam;
     var texWidth:Int;
-    
     
 	public function new() {
         cam = new FreeCam();
@@ -175,7 +173,7 @@ class ClipMap {
         
         generateBuffers();
         
-        centerOn(10000, 8000);
+        centerOn(0, 0);
     }
     
     public function getLevelTexture(level:Int = 0):Image {
@@ -550,15 +548,21 @@ class ClipMap {
     }
     
     function worldHeight(wx:Float, wz:Float):Float {
-        wx *= 0.3;
-        wz *= 0.3;
+        wx *= 0.6;
+        wz *= 0.6;
         //return Math.abs(Math.sin(wx) + Math.cos(wz)) * 0.4;
-        return noise.noise2D(wx + 1000, wz + 1000);// * Math.max(0.001, Math.min(1.0, Math.sqrt(wx * wx + wz * wz) * 0.01));
+        var offset = Math.sin(wx * 0.001) * Math.cos(wz * 0.001) * 0.5;
+        return noise.noise2D(wx + 1000, wz + 1000) + offset;// * Math.max(0.001, Math.min(1.0, Math.sqrt(wx * wx + wz * wz) * 0.01));
     }
     
+    var cameraX = 0.0;
+    var cameraZ = 0.0;
     function centerOn(worldX:Int, worldY:Int) {
         var originX:Int = worldX - (n >> 2);
         var originY:Int = worldY - (n >> 2);
+        
+        cameraX = worldX;
+        cameraZ = worldY;
         
         for(level in 0...levels) {
             var params = levelParams[level];
@@ -732,7 +736,6 @@ class ClipMap {
             
             cellShift *= 2;
         }
-        
         updateTextures(true);
     }
     
@@ -741,11 +744,10 @@ class ClipMap {
     
     var o = 0.0;
     public function render(g4:kha.graphics4.Graphics) {
-        
         cam.pos.y = Math.max(
             worldHeight(
-                cam.pos.x + largestDetailSize * worldOffsetX, 
-                cam.pos.z + largestDetailSize * worldOffsetY) * 30.0 + 0.5, 
+                (cam.pos.x + cameraX) / finestDetailSize, 
+                (cam.pos.z + cameraZ) / finestDetailSize) * 50.0 + 0.5, 
                 cam.pos.y);
        
         cam.update();
@@ -755,6 +757,9 @@ class ClipMap {
         
         if(shiftX != 0 || shiftZ != 0) {
             shiftMap(shiftX, shiftZ);
+            cameraX += shiftX * largestDetailSize;
+            cameraZ += shiftZ * largestDetailSize;
+
             cam.pos.x += -shiftX * largestDetailSize;
             cam.pos.z += -shiftZ * largestDetailSize;
         }
@@ -780,7 +785,7 @@ class ClipMap {
             
         startLevels();
         for(level in 0...levels) {
-            if(level == levels - 1) {
+            if(level + 1 == levels) {
                 g4.setFloat(smoothingLocation, 0.0);
             }
             renderLevel(level, g4);

@@ -20,11 +20,6 @@ void main() {
     color.rgb = vec3(col.yyy);
     color.a = gl_FragCoord.z;
     
-    gl_FragColor = texture2D(heightMaps, _pos.xy);//color;
-
+    gl_FragColor = texture2D(heightMaps, _pos.xy);
     gl_FragColor = color;
-    
-    if(gl_FragCoord.x < totalWidth && gl_FragCoord.y < totalWidth ) {
-        gl_FragColor.rgb = texture2D(heightMaps, gl_FragCoord.xy / totalWidth).aaa;
-    }
 }

@@ -1,10 +1,5 @@
 package graphics;
 
-import PerlinNoise;
-import graphics.FreeCam;
-
-import haxe.ds.Vector;
-
 import kha.graphics4.VertexStructure;
 import kha.graphics4.VertexBuffer;
 import kha.graphics4.IndexBuffer;
@@ -19,9 +14,6 @@ import kha.graphics4.TextureFormat;
 import kha.graphics4.TextureFilter;
 import kha.graphics4.TextureUnit;
 import kha.graphics4.ConstantLocation;
-
-import kha.math.FastMatrix4;
-import kha.math.FastVector3;
 
 class PostprocessingBuffer {
     
@@ -109,15 +101,13 @@ class PostprocessingBuffer {
             }
             
             texture = kha.Image.createRenderTarget(
-                f.width, f.height,
-                //nearestPowerOfTwo(f.width >> 2), 
-                //nearestPowerOfTwo(f.height >> 2),
+                //f.width, f.height,
+                nearestPowerOfTwo(f.width >> 2), 
+                nearestPowerOfTwo(f.height >> 2),
                 TextureFormat.RGBA32, 
                 kha.graphics4.DepthStencilFormat.DepthOnly, 0);
         }
     }
-    
-    
     
     public function end(f:kha.Framebuffer) {
         var g4 = f.g4;
@@ -130,7 +120,6 @@ class PostprocessingBuffer {
         g4.setFloat2(screenSizeLocation, kanvas.width, kanvas.height);
         g4.setTexture(texUnit, texture);
         
-        /*
         g4.setTextureParameters(texUnit, 
             TextureAddressing.Repeat, 
             TextureAddressing.Repeat, 
@@ -138,7 +127,6 @@ class PostprocessingBuffer {
             TextureFilter.PointFilter, 
             MipMapFilter.NoMipFilter
         );
-        */
        
         g4.clear(kha.Color.White);
         g4.setVertexBuffer(vBuf);
@@ -147,5 +135,4 @@ class PostprocessingBuffer {
         
         g4.end();
     }
-    
 }
