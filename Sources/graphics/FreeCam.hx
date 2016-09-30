@@ -5,7 +5,7 @@ import kha.math.FastMatrix4;
 
 class FreeCam {
     
-    var speed:Float = 0.01;
+    var speed:Float = 0.1;
     var mouseSensitivity:Float = Math.PI / 2160.0;
     
     public var pos:FastVector3;
@@ -24,6 +24,7 @@ class FreeCam {
     var moveDown = false;
     
     var multiplier = 1.0;
+    var multiplierFast = 10.0;
     public var matrix(get, null):FastMatrix4;
     var mDown = false;
     
@@ -31,6 +32,8 @@ class FreeCam {
         up = new FastVector3(0.0, 1.0, 0.0);
         pos = new FastVector3(0.0, 0.1, 0.0);
         dir = new FastVector3(0, 0, 1.0);
+        
+        yaw = Math.PI * 0.25;
     
         updateDir();
         
@@ -58,7 +61,7 @@ class FreeCam {
         
         kha.input.Keyboard.get().notify(function(key:kha.Key, v:String) {
             if(key == kha.Key.SHIFT) {
-                multiplier = 10.0;
+                multiplier = multiplierFast;
             }
            
             if(key == kha.Key.CTRL) {
@@ -95,8 +98,8 @@ class FreeCam {
     function updateDir() {
         var ratio = Math.abs(Math.cos(pitch));
         
-        dir.x = Math.sin(yaw + Math.PI) * ratio;
-        dir.z = Math.cos(yaw + Math.PI) * ratio;
+        dir.z = -Math.cos(yaw) * ratio;
+        dir.x = -Math.sin(yaw) * ratio;
         
         dir.y = Math.sin(pitch);
     
@@ -139,9 +142,6 @@ class FreeCam {
         var m:FastMatrix4 = 
         FastMatrix4.rotationX(-pitch).multmat(FastMatrix4.rotationY(-yaw));
         m = m.multmat(FastMatrix4.translation(-pos.x, -pos.y, -pos.z));
-        
-        
         return m;
     }
-    
 }

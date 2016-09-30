@@ -26,14 +26,14 @@ void main() {
     gl_FragColor = texture2D(heightMaps, _pos.xy);
 
     
-    vec3 col = vec3(206,235,135);
+    vec3 col = vec3(167,205,44);
     col /= 255.0;
-    vec3 col2 = vec3(141,186,31);
+    vec3 col2 = vec3(186,218,95);
     col2 /= 255.0;
-    vec3 col3 = vec3(179,224,69);
+    vec3 col3 = vec3(206,232,145);
     col3 /= 255.0;
 
-    float steps = 2.0;
+    float steps = 0.01;
     float os = 0.0 * min(1.0, mod(time * 0.5, 1.0));
 
     float segment = (height + os * 3.0) / steps;

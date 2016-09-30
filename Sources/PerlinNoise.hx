@@ -191,7 +191,7 @@ class PerlinNoise {
     fPersMax = 0;
 
     for ( i in 0...octaves ) {
-      fFreq = Math.pow(2,i);
+      fFreq = Math.pow(2, i);
       fPers = Math.pow(fPersistence,i);
       fPersMax += fPers;
       aOctFreq.push( fFreq );

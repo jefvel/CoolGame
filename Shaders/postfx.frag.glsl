@@ -24,8 +24,8 @@ void main() {
     vig = 1.0 - vig;
 
     vec4 aberrationColor = color;
-    aberrationColor.r = texture2D(buff, uv + d.x * (0.0011 + vig * 0.001)).r;
-    aberrationColor.g = texture2D(buff, uv + d.y * (0.0003 + vig * 0.001)).g;
+    aberrationColor.r = texture2D(buff, uv + d.x * (0.0011 + vig * 0.02)).r;
+    aberrationColor.g = texture2D(buff, uv + d.y * (0.0003 + vig * 0.02)).g;
     
     color = mix(color, aberrationColor, vig);
     
@@ -40,8 +40,13 @@ void main() {
     //color *= max(0.6, mod(gl_FragCoord.x, 1.0) * mod(gl_FragCoord.y, 1.0));
     float sky = 1.0 - color.a;
     color.a = 1.0;
-    vec3 skyColor = mix(vec3(201,233,246), vec3(69,179,224), pow(uv.y, 2.1));
+    vec3 skyColor = mix(vec3(201,233,246), vec3(80,200,198), pow(uv.y, 2.1));
     skyColor /= 255.0;
+    
+    color = mix(color, aberrationColor, vig);
+    color.a = 1.0;
     color.rgb = mix(color.rgb, skyColor, sky); 
+    color.a = 1.0;
+    
     gl_FragColor = color;
 }

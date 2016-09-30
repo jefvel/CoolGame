@@ -6,6 +6,7 @@ attribute vec2 pos;
 
 uniform float time;
 
+uniform float heightMultiplier;
 uniform float n;
 uniform int level;
 uniform vec2 origin;
@@ -22,6 +23,7 @@ uniform float smoothing;
 
 varying vec3 col;
 varying vec3 _pos;
+
 
 void kore() {
     vec2 uv;
@@ -94,6 +96,7 @@ void kore() {
     float height = localHeight * (1.0 - a.x) + interpHeight.x * a.x;
     
     height = mix(localHeight, height, smoothing);
+    height *= heightMultiplier;
 
     vec4 wpos = vec4(
         (pos.x) * scale + offset.x,

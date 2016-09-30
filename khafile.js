@@ -12,6 +12,9 @@ project.addLibrary("kek");
 
 //project.addLibrary("linc_enet");
 
+project.addDefine("glsl2");
+project.addDefine("--glsl2");
+
 //project.addDefine("windows");
 //project.addParameter("-cpp cpp/");
 //project.addParameter("-cp ../Libraries/linc_enet");

@@ -51,11 +51,12 @@ class ClipMap {
         kha.Color.Orange
     ];
         
-    var levels:Int = 5;
+    var levels:Int = 3;
     var m:Int = 32;
     var n:Int;
     
-    var finestDetailSize:Float = 1.0;
+    var heightMultiplier = 6.0;
+    var finestDetailSize:Float = 0.1;
     var largestDetailSize:Float;
     
     //Vertex and index buffers for parts of clipmap
@@ -88,6 +89,7 @@ class ClipMap {
     var mvpLocation:ConstantLocation;
     var levelLocation:ConstantLocation;
     var smoothingLocation:ConstantLocation;
+    var heightMultiplierLocation:ConstantLocation;
 
     var timeLocation:ConstantLocation;
     var time:Float;
@@ -106,9 +108,14 @@ class ClipMap {
     var cam:FreeCam;
     var texWidth:Int;
     
+    var originX = 0.0;
+    var originY = 0.0;
+    var cameraX = 0.0;
+    var cameraZ = 0.0;
+    
 	public function new() {
         cam = new FreeCam();
-        noise = new PerlinNoise();
+        noise = new PerlinNoise(3, 8, 0.5);
         
         startTime = haxe.Timer.stamp();
         
@@ -140,6 +147,7 @@ class ClipMap {
         levelLocation = pipeline.getConstantLocation("level");
         nLocation = pipeline.getConstantLocation("n");
         smoothingLocation = pipeline.getConstantLocation("smoothing");
+        heightMultiplierLocation = pipeline.getConstantLocation("heightMultiplier");
         
         kha.Scheduler.addFrameTask(function(){
             time = haxe.Timer.stamp() - startTime;
@@ -387,181 +395,25 @@ class ClipMap {
         outerRingIndices.unlock();
     }
     
-    var originX = 0.0;
-    var originY = 0.0;
-    
-    function startLevels() {
-        originX = -(m * 2 - 1);
-        originY = -(m * 2 - 1);
-    }
-        
-    function renderLevel(level:Int, g:kha.graphics4.Graphics) {
-        var params = levelParams[level];
-        
-        g.setInt(levelLocation, level);
-        g.setTexture(textureUnit, textures[level]);
-        
-        g.setFloat2(textureOffsetLocation, 
-            params.textureOffsetX, params.textureOffsetY);
-        
-        g.setTextureParameters(textureUnit,
-            TextureAddressing.Repeat,
-            TextureAddressing.Repeat,
-            TextureFilter.PointFilter,
-            TextureFilter.PointFilter,
-            kha.graphics4.MipMapFilter.NoMipFilter
-        );
-
-        var color = levelColors[level % levelColors.length];
-        g.setFloat3(colorLocation, color.R, color.G, color.B);
-        
-        var sm = 1 << level;
-        var s = finestDetailSize;
-    
-        var cellSize = sm * s;
-        
-        g.setFloat(scaleLocation, cellSize);
-        g.setFloat2(originLocation, 
-            (originX) * cellSize, 
-            (originY) * cellSize);
-                 
-        //Draw center thing
-        if(level == 0) {
-            g.setFloat2(offsetLocation,
-                (originX + m) * s, 
-                (originY + m - 1) * s);
-            
-            g.setVertexBuffer(centerVerts);
-            g.setIndexBuffer(centerIndices);
-            g.drawIndexedVertices();
-        }
-        
-                
-        //Draw outer degenerates
-        //g.setVertexBuffer(outerRing);
-        //g.setIndexBuffer(outerRingIndices);
-        //g.drawIndexedVertices();
-               
-        //Level has a "L" piece
-        if(level % 2 == 0) {
-            if(level != 0){
-                originX = originX * 0.5 - (m);
-                originY = originY * 0.5 - (m - 1);
-            }
-            
-            g.setVertexBuffer(lVerts);
-            g.setIndexBuffer(lIndices);
-            
-        }else //Level has an inverse "L" piece
-        {
-            if(level != 0){
-                originX = originX * 0.5 - (m - 1);
-                originY = originY * 0.5 - (m);
-            }
-            
-            g.setVertexBuffer(invLVerts);
-            g.setIndexBuffer(invLIndices);
-        }
-        
-        g.setFloat2(originLocation, 
-            (originX) * cellSize, 
-            (originY) * cellSize);
-        
-        //Draw L/Inverted L  
-        g.setFloat2(offsetLocation, 
-            (originX + m - 1) * cellSize, 
-            (originY + m - 1) * cellSize);
-        g.drawIndexedVertices();
-
-        //Draw main ring
-        g.setVertexBuffer(squareVerts);
-        g.setIndexBuffer(squareIndices);
-        
-        var bs = m - 1;
-        var ox = 0;
-        
-        //Draw top and bottom row
-        for(x in 0...4) {
-            if(x > 1) {
-                ox = 2;
-            }
-            
-            g.setFloat2(offsetLocation, 
-                (originX + x * bs + ox) * cellSize, 
-                (originY) * cellSize);
-                
-            g.drawIndexedVertices();
-            
-            g.setFloat2(offsetLocation, 
-                (originX + x * bs + ox) * cellSize, 
-                (originY + (m - 1) * 3 + 2) * cellSize);
-                
-            g.drawIndexedVertices();
-        }
-        
-        ox = 0;
-        
-        //Draw left and right column 
-        for(x in 1...3) {
-            if(x > 1) {
-                ox = 2;
-            }
-            
-            g.setFloat2(offsetLocation, 
-                (originX) * cellSize, 
-                (originY + x * bs + ox) * cellSize);
-            g.drawIndexedVertices();
-        
-            g.setFloat2(offsetLocation, 
-                (originX + (m - 1) * 3 + 2) * cellSize, 
-                (originY + x * bs + ox) * cellSize);
-            g.drawIndexedVertices();
-        }
-        
-        //Horizontal fixup pieces
-        g.setVertexBuffer(horizontalFixupVerts);
-        g.setIndexBuffer(horizontalFixupIndices);
-        
-        g.setFloat2(offsetLocation, 
-                (originX + (m - 1) * 2) * cellSize, 
-                (originY) * cellSize);
-        g.drawIndexedVertices();
-        g.setFloat2(offsetLocation, 
-                (originX + (m - 1) * 2) * cellSize, 
-                (originY + (m - 1) * 3 + 2) * cellSize);
-        g.drawIndexedVertices();
-        
-        //Vertical fixup pieces
-        g.setVertexBuffer(verticalFixupVerts);
-        g.setIndexBuffer(verticalFixupIndices);
-        
-        g.setFloat2(offsetLocation, 
-                (originX) * cellSize,
-                (originY + (m - 1) * 2) * cellSize);
-        g.drawIndexedVertices();
-        g.setFloat2(offsetLocation, 
-                (originX + (m - 1) * 3 + 2) * cellSize,
-                (originY + (m - 1) * 2) * cellSize);
-        g.drawIndexedVertices();
-        
-    }
-    
-    function worldHeight(wx:Float, wz:Float):Float {
-        var wxf = wx * 0.6;
-        var wzf = wz * 0.6;
+    function worldHeight(wx:Float, wz:Float, finedetails:Bool = true):Float {
+        var scale = 8.1;
+        var wxf = wx * scale * finestDetailSize;
+        var wzf = wz * scale * finestDetailSize;
         //return Math.abs(Math.sin(wx) + Math.cos(wz)) * 0.4;
         var offset = Math.sin(wxf * 0.001) * Math.cos(wzf * 0.001) * 0.5;
-        return (noise.noise2D(wxf, wzf) + offset) * 150.0;// * Math.max(0.001, Math.min(1.0, Math.sqrt(wx * wx + wz * wz) * 0.01));
+        if(finedetails){
+            //offset += Math.sin(wxf * 10.0) * Math.cos(wzf * 10.0) * 0.0005;
+        }
+        
+        return Math.min(1.0, (noise.noise2D(wxf, wzf) + offset));// * Math.max(0.001, Math.min(1.0, Math.sqrt(wx * wx + wz * wz) * 0.01));
     }
     
-    var cameraX = 0.0;
-    var cameraZ = 0.0;
     function centerOn(worldX:Int, worldY:Int) {
         var originX:Int = worldX - (n >> 1);
         var originY:Int = worldY - (n >> 1);
         
-        cameraX = worldX;
-        cameraZ = worldY;
+        cameraX = worldX * finestDetailSize;
+        cameraZ = worldY * finestDetailSize;
         
         for(level in 0...levels) {
             var params = levelParams[level];
@@ -739,9 +591,163 @@ class ClipMap {
         cam.pos.x += -x * largestDetailSize;
         cam.pos.z += -z * largestDetailSize;
         
-        trace("World pos: x", cam.pos.x + cameraX, ", z", cam.pos.z + cameraZ);
+            updateTextures(true);
+    }
+    
+    function startLevels() {
+        originX = -(m * 2 - 1);
+        originY = -(m * 2 - 1);
+    }
         
-        updateTextures(true);
+    function renderLevel(level:Int, g:kha.graphics4.Graphics) {
+        var params = levelParams[level];
+        
+        g.setInt(levelLocation, level);
+        g.setTexture(textureUnit, textures[level]);
+        
+        g.setFloat2(textureOffsetLocation, 
+            params.textureOffsetX, params.textureOffsetY);
+        
+        g.setTextureParameters(textureUnit,
+            TextureAddressing.Repeat,
+            TextureAddressing.Repeat,
+            TextureFilter.PointFilter,
+            TextureFilter.PointFilter,
+            kha.graphics4.MipMapFilter.NoMipFilter
+        );
+
+        var color = levelColors[level % levelColors.length];
+        g.setFloat3(colorLocation, color.R, color.G, color.B);
+        
+        var sm = 1 << level;
+        var s = finestDetailSize;
+    
+        var cellSize = sm * s;
+        
+        g.setFloat(scaleLocation, cellSize);
+        g.setFloat2(originLocation, 
+            (originX) * cellSize, 
+            (originY) * cellSize);
+                 
+        //Draw center thing
+        if(level == 0) {
+            g.setFloat2(offsetLocation,
+                (originX + m) * s, 
+                (originY + m - 1) * s);
+            
+            g.setVertexBuffer(centerVerts);
+            g.setIndexBuffer(centerIndices);
+            g.drawIndexedVertices();
+        }
+        
+                
+        //Draw outer degenerates
+        //g.setVertexBuffer(outerRing);
+        //g.setIndexBuffer(outerRingIndices);
+        //g.drawIndexedVertices();
+               
+        //Level has a "L" piece
+        if(level % 2 == 0) {
+            if(level != 0){
+                originX = originX * 0.5 - (m);
+                originY = originY * 0.5 - (m - 1);
+            }
+            
+            g.setVertexBuffer(lVerts);
+            g.setIndexBuffer(lIndices);
+            
+        }else //Level has an inverse "L" piece
+        {
+            if(level != 0){
+                originX = originX * 0.5 - (m - 1);
+                originY = originY * 0.5 - (m);
+            }
+            
+            g.setVertexBuffer(invLVerts);
+            g.setIndexBuffer(invLIndices);
+        }
+        
+        g.setFloat2(originLocation, 
+            (originX) * cellSize, 
+            (originY) * cellSize);
+        
+        //Draw L/Inverted L  
+        g.setFloat2(offsetLocation, 
+            (originX + m - 1) * cellSize, 
+            (originY + m - 1) * cellSize);
+        g.drawIndexedVertices();
+
+        //Draw main ring
+        g.setVertexBuffer(squareVerts);
+        g.setIndexBuffer(squareIndices);
+        
+        var bs = m - 1;
+        var ox = 0;
+        
+        //Draw top and bottom row
+        for(x in 0...4) {
+            if(x > 1) {
+                ox = 2;
+            }
+            
+            g.setFloat2(offsetLocation, 
+                (originX + x * bs + ox) * cellSize, 
+                (originY) * cellSize);
+                
+            g.drawIndexedVertices();
+            
+            g.setFloat2(offsetLocation, 
+                (originX + x * bs + ox) * cellSize, 
+                (originY + (m - 1) * 3 + 2) * cellSize);
+                
+            g.drawIndexedVertices();
+        }
+        
+        ox = 0;
+        
+        //Draw left and right column 
+        for(x in 1...3) {
+            if(x > 1) {
+                ox = 2;
+            }
+            
+            g.setFloat2(offsetLocation, 
+                (originX) * cellSize, 
+                (originY + x * bs + ox) * cellSize);
+            g.drawIndexedVertices();
+        
+            g.setFloat2(offsetLocation, 
+                (originX + (m - 1) * 3 + 2) * cellSize, 
+                (originY + x * bs + ox) * cellSize);
+            g.drawIndexedVertices();
+        }
+        
+        //Horizontal fixup pieces
+        g.setVertexBuffer(horizontalFixupVerts);
+        g.setIndexBuffer(horizontalFixupIndices);
+        
+        g.setFloat2(offsetLocation, 
+                (originX + (m - 1) * 2) * cellSize, 
+                (originY) * cellSize);
+        g.drawIndexedVertices();
+        g.setFloat2(offsetLocation, 
+                (originX + (m - 1) * 2) * cellSize, 
+                (originY + (m - 1) * 3 + 2) * cellSize);
+        g.drawIndexedVertices();
+        
+        //Vertical fixup pieces
+        g.setVertexBuffer(verticalFixupVerts);
+        g.setIndexBuffer(verticalFixupIndices);
+        
+        g.setFloat2(offsetLocation, 
+                (originX) * cellSize,
+                (originY + (m - 1) * 2) * cellSize);
+        g.drawIndexedVertices();
+        g.setFloat2(offsetLocation, 
+                (originX + (m - 1) * 3 + 2) * cellSize,
+                (originY + (m - 1) * 2) * cellSize);
+        g.drawIndexedVertices();
+        
     }
     
     public function render(g4:kha.graphics4.Graphics) {
@@ -755,9 +761,8 @@ class ClipMap {
             
         cam.pos.y = worldHeight(
                 (cam.pos.x + cameraX) / finestDetailSize,
-                (cam.pos.z + cameraZ) / finestDetailSize) + 1.0 + Math.sin(time) * 0.1;
+                (cam.pos.z + cameraZ) / finestDetailSize, false) * heightMultiplier + 0.2 + Math.sin(time) * 0.1;
        
-        
         var shiftX = Std.int(cam.pos.x / (largestDetailSize));
         var shiftZ = Std.int(cam.pos.z / (largestDetailSize));
         
@@ -767,6 +772,7 @@ class ClipMap {
         
         g4.setPipeline(pipeline);
         g4.setFloat(smoothingLocation, 1.0);
+        g4.setFloat(heightMultiplierLocation, heightMultiplier);
         
         g4.setFloat(nLocation, n);
         g4.setFloat(timeLocation, time);
