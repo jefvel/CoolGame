@@ -1,7 +1,8 @@
-#ifdef GL_ES
-precision highp float;
-#endif
+#version 100
 
+#ifdef GL_ES
+precision mediump float;
+#endif
 //uniform vec3 color;
 varying vec3 col;
 

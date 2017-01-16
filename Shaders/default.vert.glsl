@@ -1,7 +1,3 @@
-#ifdef GL_ES
-precision highp float;
-#endif
-
 attribute vec2 pos;
 
 uniform float time;
